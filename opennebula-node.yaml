@@ -1,0 +1,101 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: opennebula-node
+  namespace: opennebula
+spec:
+  selector:
+    matchLabels:
+      app: opennebula-node
+  template:
+    metadata:
+      labels:
+        app: opennebula-node
+    spec:
+      nodeSelector:
+        opennebula-node: ""
+      hostNetwork: true
+      hostPID: true
+
+      containers:
+      - name: sshd
+        image: kvaps/opennebula-node
+        command: [ "/usr/sbin/sshd", "-D" ]
+        lifecycle:
+          postStart:
+            exec:
+              command: ["/bin/sh", "-c", "chown oneadmin: -R /var/lib/one/.ssh; chmod 700 -R /var/lib/one/.ssh"]
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: onehost-ssh-config
+          mountPath: "/etc/ssh"
+        - name: oneadmin-ssh-config
+          mountPath: "/var/lib/one/.ssh"
+        - name: libvirt-run
+          mountPath: "/var/run/libvirt"
+
+        # OpenNebula Datastores
+        - name: system-ds
+          mountPath: "/var/lib/one/datastores/100"
+        - name: images-ds
+          mountPath: "/var/lib/one/datastores/101"
+
+      - name: libvirtd
+        image: kvaps/opennebula-node
+        command: [ "/usr/sbin/libvirtd" ]
+        lifecycle:
+          postStart:
+            exec:
+              command: ["/bin/sh", "-c", "chown root:kvm /dev/kvm"]
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: dbus-lib
+          mountPath: "/var/lib/dbus"
+        - name: dbus-run
+          mountPath: "/var/run/dbus"
+        - name: libvirt-run
+          mountPath: "/var/run/libvirt"
+
+        # OpenNebula Datastores
+        - name: system-ds
+          mountPath: "/var/lib/one/datastores/100"
+        - name: images-ds
+          mountPath: "/var/lib/one/datastores/101"
+
+      - name: virtlogd
+        image: kvaps/opennebula-node
+        command: [ "/usr/sbin/virtlogd" ]
+        volumeMounts:
+        - name: libvirt-run
+          mountPath: "/var/run/libvirt"
+
+
+      volumes:
+        - name: oneadmin-ssh-config
+          configMap:
+            name: oneadmin-ssh-config
+        - name: onehost-ssh-config
+          configMap:
+            name: onehost-ssh-config
+            defaultMode: 0600
+        - name: libvirt-run
+          #emptyDir: {}
+          hostPath:
+            path: "/var/run/libvirt"
+        - name: dbus-run
+          hostPath:
+            path: "/var/run/dbus"
+        - name: dbus-lib
+          hostPath:
+            path: "/var/lib/dbus"
+
+        # OpenNebula Datastores
+        - name: system-ds
+          hostPath:
+            path: "/var/lib/one/datastores/100"
+        - name: images-ds
+          nfs:
+            server: mynfsserver
+            path: "/data/opennebula-images"
