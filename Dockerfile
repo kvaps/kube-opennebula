@@ -7,13 +7,15 @@ RUN sed -i 's|# \(deb-src http://archive.ubuntu.com/ubuntu/ xenial main restrict
  && apt-get -y build-dep libvirt \
  && apt-get -y source libvirt \
  && cd libvirt-* \
- && ./configure --prefix=/usr --localstatedir=/var --sysconfdir=/etc --without-systemd-daemon --without-apparmor --without-pm-utils --without-udev \
+ && ./configure --prefix=/usr --localstatedir=/var --sysconfdir=/etc --without-systemd-daemon --without-apparmor --without-apparmor-mount --without-pm-utils --without-udev --without-dbus --without-firewalld --without-audit --without-avahi \
  && make \
  && checkinstall -y --install=no \
  && apt-get -y autoremove $(apt-cache showsrc libvirt | sed -e '/Build-Depends/!d;s/Build-Depends: \|,\|([^)]*),*\|\[[^]]*\]//g') \
  && dpkg -i libvirt_*_amd64.deb \
  && cd - \
  && rm -rf libvirt-* \
+ && groupadd libvirt \
+ && useradd -d /var/lib/libvirt -g libvirt -s /bin/false libvirt
 
 RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections \
  && apt-get -y update \
