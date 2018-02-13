@@ -14,8 +14,7 @@ RUN sed -i 's|# \(deb-src http://archive.ubuntu.com/ubuntu/ xenial main restrict
  && dpkg -i libvirt_*_amd64.deb \
  && cd - \
  && rm -rf libvirt-* \
- && groupadd libvirt \
- && useradd -d /var/lib/libvirt -g libvirt -s /bin/false libvirt
+ && groupadd libvirtd
 
 RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections \
  && apt-get -y update \
