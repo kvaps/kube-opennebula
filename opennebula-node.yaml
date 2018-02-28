@@ -15,7 +15,8 @@ spec:
       nodeSelector:
         opennebula-node: ""
       hostNetwork: true
-      hostPID: true
+      hostPID: false
+      hostIPC: true
 
       containers:
       - name: sshd
@@ -34,6 +35,8 @@ spec:
           mountPath: "/var/lib/one/.ssh"
         - name: libvirt-run
           mountPath: "/var/run/libvirt"
+        - name: modules
+          mountPath: "/lib/modules"
 
         # OpenNebula Datastores
         - name: system-ds
@@ -57,6 +60,8 @@ spec:
           mountPath: "/var/run/dbus"
         - name: libvirt-run
           mountPath: "/var/run/libvirt"
+        - name: modules
+          mountPath: "/lib/modules"
 
         # OpenNebula Datastores
         - name: system-ds
@@ -90,6 +95,9 @@ spec:
         - name: dbus-lib
           hostPath:
             path: "/var/lib/dbus"
+        - name: modules
+          hostPath:
+            path: "/lib/modules"
 
         # OpenNebula Datastores
         - name: system-ds
