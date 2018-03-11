@@ -52,7 +52,7 @@ spec:
         lifecycle:
           postStart:
             exec:
-              command: ["/bin/sh", "-c", "chown root:kvm /dev/kvm"]
+              command: ["/bin/sh", "-c", "chmod 660 /dev/kvm; chown root:kvm /dev/kvm"]
         securityContext:
           privileged: true
         volumeMounts:
