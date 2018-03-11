@@ -4,6 +4,8 @@ metadata:
   name: opennebula-node
   namespace: opennebula
 spec:
+  updateStrategy:
+    type: OnDelete
   selector:
     matchLabels:
       app: opennebula-node
