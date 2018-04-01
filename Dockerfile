@@ -1,4 +1,4 @@
-FROM ubuntu:16.04
+FROM ubuntu:artful
 
 RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections \
  && apt-get -y update \
