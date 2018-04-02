@@ -16,4 +16,4 @@ RUN echo "deb http://download.proxmox.com/debian stretch pve-no-subscription" > 
  && apt-get -y update \
  && apt-get -y install pve-qemu-kvm
 
-RUN sed 's/^#\(unix_sock\|auth_unix\)/\1/' /etc/libvirt/libvirtd.conf | grep unix_sock\\\|auth_unix
+RUN sed -i 's/^#\(unix_sock\|auth_unix\)/\1/' /etc/libvirt/libvirtd.conf
