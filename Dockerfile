@@ -1,12 +1,4 @@
-FROM ubuntu:16.04
+FROM centos:7
 
-RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections \
- && apt-get -y update \
- && apt-get -y install wget apt-transport-https
-
-RUN wget -q -O- https://downloads.opennebula.org/repo/repo.key | apt-key add - \
- && echo "deb https://downloads.opennebula.org/repo/5.4/Ubuntu/16.04 stable opennebula" > /etc/apt/sources.list.d/opennebula.list \
- && apt-get -y update \
- && apt-get -y install opennebula-node \
- && mkdir -p /var/run/sshd \
- && rm -f /etc/libvirt/qemu/networks/autostart/default.xml
+RUN echo -n '[opennebula]\nname=opennebula\nbaseurl=https://downloads.opennebula.org/repo/5.4/CentOS/7/x86_64\nenabled=1\ngpgkey=https://downloads.opennebula.org/repo/repo.key\ngpgcheck=1\n#repo_gpgcheck=1' > /etc/yum.repos.d/opennebula.repo \
+ && yum -y install opennebula-node-kvm
