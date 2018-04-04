@@ -1,4 +1,4 @@
-FROM ubuntu:16.04
+FROM ubuntu:artful
 
 RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections \
  && apt-get -y update \
@@ -11,9 +11,7 @@ RUN wget -q -O- https://downloads.opennebula.org/repo/repo.key | apt-key add - \
  && mkdir -p /var/run/sshd \
  && rm -f /etc/libvirt/qemu/networks/autostart/default.xml
 
-RUN echo 'deb http://ftp.cz.debian.org/debian stretch main contrib' > /etc/apt/sources.list.d/debian.list \
- && echo 'deb http://security.debian.org stretch/updates main contrib' >> /etc/apt/sources.list.d/debian.list \
- && echo "deb http://download.proxmox.com/debian stretch pve-no-subscription" > /etc/apt/sources.list.d/pve-install-repo.list \
+RUN echo "deb http://download.proxmox.com/debian stretch pve-no-subscription" > /etc/apt/sources.list.d/pve-install-repo.list \
  && wget http://download.proxmox.com/debian/proxmox-ve-release-5.x.gpg -O /etc/apt/trusted.gpg.d/proxmox-ve-release-5.x.gpg \
  && apt-get -y install debian-keyring debian-archive-keyring \
  && apt-get -y update \
