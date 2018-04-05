@@ -29,7 +29,7 @@ mkdir oneadmin-ssh-config
 ssh-keygen -f oneadmin-ssh-config/id_rsa -C oneadmin -P ''
 cat oneadmin-ssh-config/id_rsa.pub > oneadmin-ssh-config/authorized_keys
 
-cat > oneadmin-ssh-config/ssh_config <<EOT
+cat > oneadmin-ssh-config/config <<EOT
 Host *
     StrictHostKeyChecking no
     Port 2222
