@@ -18,4 +18,5 @@ RUN echo 'deb http://ftp.cz.debian.org/debian stretch main contrib' > /etc/apt/s
  && apt-get -y install debian-keyring debian-archive-keyring \
  && apt-get -y update \
  && apt-get -y install pve-qemu-kvm \
- && apt-get -y clean
+ && apt-get -y clean \
+ && sed -i 's/use_lvmetad = 1/use_lvmetad = 0/g' /etc/lvm/lvm.conf
