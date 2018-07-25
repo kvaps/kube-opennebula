@@ -18,7 +18,5 @@ RUN wget -q -O- https://downloads.opennebula.org/repo/repo.key | apt-key add - \
  && apt-get -y clean \
  && sed -i 's/use_lvmetad = 1/use_lvmetad = 0/g' /etc/lvm/lvm.conf \
  && sed -i 's/^#uri_default/uri_default/' /etc/libvirt/libvirt.conf \
- && sed -i 's/^#\(unix_sock\|auth_unix\)/\1/' /etc/libvirt/libvirtd.conf
-
-ENV LIBVIRT_DEFAULT_URI="qemu:///system"
-
+ && sed -i 's/^#\(unix_sock\|auth_unix\)/\1/' /etc/libvirt/libvirtd.conf \
+ && echo 'export LIBVIRT_DEFAULT_URI="qemu:///system"' > /var/lib/one/.bash_profile
