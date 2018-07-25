@@ -32,4 +32,6 @@ RUN wget -q -O- https://downloads.opennebula.org/repo/repo.key | apt-key add - \
  && rm -f /etc/libvirt/qemu/networks/autostart/default.xml \
  && rm -f /usr/local/bin/systemctl \
  && apt-get -y clean \
- && sed -i 's/use_lvmetad = 1/use_lvmetad = 0/g' /etc/lvm/lvm.conf
+ && sed -i 's/use_lvmetad = 1/use_lvmetad = 0/g' /etc/lvm/lvm.conf \
+ && sed -i 's/^#uri_default/uri_default/' /etc/libvirt/libvirt.conf
+
