@@ -15,7 +15,8 @@ RUN wget -q -O- https://downloads.opennebula.org/repo/repo.key | apt-key add - \
  && sed -i 's/apt-get install/apt-get -y install/g' /usr/share/one/install_gems \
  && echo '0\n' | /usr/share/one/install_gems \
  && mkdir /var/lock/one && chown oneadmin: /var/lock/one \
- && sed -i 's/\(SYSTEM *= *\)"file"/\1"std"/' /etc/one/oned.conf
+ && sed -i 's/\(SYSTEM *= *\)"file"/\1"std"/' /etc/one/oned.conf \
+ && sed -i 's/\(system *= *\)"file"/\1"std"/' /etc/one/sched.conf
 
 USER oneadmin
-ENTRYPOINT [ "/usr/bin/oned", "-f" ]
+ENTRYPOINT [ "/usr/bin/oned", "-f" ]m
