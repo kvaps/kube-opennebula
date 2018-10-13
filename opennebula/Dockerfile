@@ -19,4 +19,5 @@ RUN wget -q -O- https://downloads.opennebula.org/repo/repo.key | apt-key add - \
  && sed -i 's/\(system *= *\)"file"/\1"std"/' /etc/one/sched.conf
 
 USER oneadmin
-ENTRYPOINT [ "/usr/bin/oned", "-f" ]m
+ENTRYPOINT [ "/usr/bin/oned", "-f" ]
+#ENTRYPOINT [ "/usr/bin/mm_sched" ]
