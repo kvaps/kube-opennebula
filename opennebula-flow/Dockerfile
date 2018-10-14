@@ -22,5 +22,8 @@ RUN apt-get -y update \
  && apt-get -y install opennebula-flow \
  && apt-get -y clean
 
+# Logging to /dev/stdout
+RUN sed -i 's|^\(ONEFLOW_LOG *=\).*|\1 "/dev/stdout"|' /usr/lib/one/oneflow/oneflow-server.rb
+
 USER oneadmin
-ENTRYPOINT [ "/bin/sh", "-c", "ln -sf /dev/stdout /var/log/one/oneflow.log && exec /usr/bin/ruby /usr/lib/one/oneflow/oneflow-server.rb" ]
+ENTRYPOINT [ "/usr/bin/ruby", "/usr/lib/one/oneflow/oneflow-server.rb" ]

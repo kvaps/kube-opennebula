@@ -24,10 +24,11 @@ RUN apt-get -y update \
  && rm -f /usr/local/bin/systemd-tmpfiles \
  && apt-get -y clean
 
-# Install undaemonize
-ADD undaemonize.c /undaemonize.c
-RUN gcc /undaemonize.c -o /usr/local/bin/undaemonize
+# Logging to /dev/stdout, do not daemonize novnc-server
+RUN sed -i 's|^\(SUNSTONE_LOG *=\).*|\1 "/dev/stdout"|' /usr/lib/one/sunstone/sunstone-server.rb \
+ && sed -i 's|^\(VNC_LOG *=\).*|\1 "/dev/stdout"|' /usr/bin/novnc-server \
+ && sed -i '/cmd *=/a\        exec(cmd)' /usr/lib/one/ruby/OpenNebulaVNC.rb
 
 USER oneadmin
-ENTRYPOINT [ "/bin/sh", "-c", "ln -sf /dev/stdout /var/log/one/sunstone.log && exec /usr/bin/ruby /usr/lib/one/sunstone/sunstone-server.rb" ]
-#ENTRYPOINT [ "/bin/sh", "-c", "ln -sf /dev/stdout /var/log/one/novnc.log && undaemonize novnc-server start" ]
+#ENTRYPOINT [ "/usr/bin/ruby", "/usr/lib/one/sunstone/sunstone-server.rb" ]
+#ENTRYPOINT [ "/usr/bin/novnc-server", "start" ]

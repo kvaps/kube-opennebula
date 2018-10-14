@@ -22,5 +22,8 @@ RUN apt-get -y update \
  && apt-get -y install opennebula-gate \
  && apt-get -y clean
 
+# Logging to /dev/stdout
+RUN sed -i 's|^\(ONEGATE_LOG *=\).*|\1 "/dev/stdout"|' /usr/lib/one/onegate/onegate-server.rb
+
 USER oneadmin
-ENTRYPOINT [ "/bin/sh", "-c", "ln -sf /dev/stdout /var/log/one/onegate.log && exec /usr/bin/ruby /usr/lib/one/onegate/onegate-server.rb" ]
+ENTRYPOINT [ "/usr/bin/ruby", "/usr/lib/one/onegate/onegate-server.rb" ]

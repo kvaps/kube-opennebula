@@ -20,8 +20,10 @@ RUN wget -q -O- https://downloads.opennebula.org/repo/repo.key | apt-key add - \
 # Install opennebula
 RUN apt-get -y update \
  && apt-get -y install opennebula \
- && apt-get -y clean \
- && sed -i 's/\(SYSTEM *= *\)"file"/\1"std"/' /etc/one/oned.conf \
+ && apt-get -y clean
+
+# Logging to /dev/stdout
+RUN sed -i 's/\(SYSTEM *= *\)"file"/\1"std"/' /etc/one/oned.conf \
  && sed -i 's/\(system *= *\)"file"/\1"std"/' /etc/one/sched.conf
 
 USER oneadmin
