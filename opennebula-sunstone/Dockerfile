@@ -30,5 +30,5 @@ RUN sed -i 's|^\(SUNSTONE_LOG *=\).*|\1 "/dev/stdout"|' /usr/lib/one/sunstone/su
  && sed -i '/cmd *=/a\        exec(cmd)' /usr/lib/one/ruby/OpenNebulaVNC.rb
 
 USER oneadmin
-#ENTRYPOINT [ "/usr/bin/ruby", "/usr/lib/one/sunstone/sunstone-server.rb" ]
-#ENTRYPOINT [ "/usr/bin/novnc-server", "start" ]
+ENTRYPOINT [ "/usr/bin/ruby", "/usr/lib/one/sunstone/sunstone-server.rb" ]
+#ENTRYPOINT [ "/usr/bin/ruby", "/usr/bin/novnc-server", "start" ]
