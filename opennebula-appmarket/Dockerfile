@@ -28,5 +28,8 @@ RUN wget https://github.com/OpenNebula/addon-appmarket/releases/download/release
 # Logging to /dev/stdout
 RUN sed -i 's|^\(APPMARKET_LOG *=\).*|\1 "/dev/stdout"|' /usr/lib/one/ruby/oneapps/market/controllers/appmarket-server.rb
 
+# https://github.com/OpenNebula/addon-appmarket/pull/57
+RUN sed -i "/require 'appmarket_version'/i require 'one_helper'" /usr/lib/one/ruby/oneapps/market/appmarket_client.rb
+
 USER oneadmin
 ENTRYPOINT [ "/usr/bin/ruby", "/usr/lib/one/ruby/oneapps/market/controllers/appmarket-server.rb" ]
