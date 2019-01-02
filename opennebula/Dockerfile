@@ -19,7 +19,7 @@ RUN wget -q -O- https://downloads.opennebula.org/repo/repo.key | apt-key add - \
 
 # Install opennebula
 RUN apt-get -y update \
- && apt-get -y install opennebula xmlstarlet \
+ && apt-get -y install opennebula less xmlstarlet vim \
  && apt-get -y clean
 
 # Logging to /dev/stdout
