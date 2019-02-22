@@ -1,4 +1,4 @@
-FROM ubuntu:18.04
+FROM ubuntu:16.04
 
 # Configure dpkg
 RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections \
@@ -8,7 +8,7 @@ RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selectio
 
 # Install opennebula-gems
 RUN wget -q -O- https://downloads.opennebula.org/repo/repo.key | apt-key add - \
- && echo "deb https://downloads.opennebula.org/repo/5.6/Ubuntu/18.04 stable opennebula" > /etc/apt/sources.list.d/opennebula.list \
+ && echo "deb https://downloads.opennebula.org/repo/5.6/Ubuntu/16.04 stable opennebula" > /etc/apt/sources.list.d/opennebula.list \
  && apt-get -y update \
  && apt-get -y install opennebula-tools \
  && apt-get -y clean \
