@@ -1,0 +1,38 @@
+---
+apiVersion: v1
+data:
+  sunstone-server.conf: |
+    :tmpdir: /var/tmp
+    :one_xmlrpc: http://opennebula:2633/RPC2
+    :one_xmlrpc_timeout: 60
+    :host: 0.0.0.0
+    :port: 9869
+    :sessions: memcache
+    :memcache_host: opennebula-sunstone-memcached
+    :memcache_port: 11211
+    :memcache_namespace: opennebula.sunstone
+    :env: 'prod'
+    :debug_level: 3
+    :auth: opennebula
+    :core_auth: cipher
+    :remote_version: http://downloads.opennebula.org/latest
+    :vnc_proxy_port: 29876
+    :vnc_client_port: 443/websockify
+    :vnc_proxy_support_wss: no
+    :vnc_proxy_ipv6: false
+    :vnc_request_password: false
+    :keep_me_logged: true
+    :lang: cs_CZ
+    :table_order: desc
+    :mode: 'mixed'
+    :marketplace_url: http://marketplace.opennebula.systems/
+    :oneflow_server: http://opennebula-oneflow:2474/
+    :routes:
+        - oneflow
+        #- vcenter
+        - support
+kind: ConfigMap
+metadata:
+  labels:
+    ksonnet.io/component: novnc-config
+  name: opennebula-sunstone-novnc

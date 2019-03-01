@@ -1,0 +1,57 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    ksonnet.io/component: oneflow
+  name: opennebula-oneflow
+spec:
+  ports:
+  - port: 2474
+    targetPort: 2474
+  selector:
+    app: opennebula-oneflow
+  type: ClusterIP
+---
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  labels:
+    ksonnet.io/component: oneflow
+  name: opennebula-oneflow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: opennebula-oneflow
+  template:
+    metadata:
+      labels:
+        app: opennebula-oneflow
+    spec:
+      containers:
+      - image: kvaps/opennebula-flow
+        name: oneflow
+        ports:
+        - containerPort: 2474
+        volumeMounts:
+        - mountPath: /etc/one/oneflow-server.conf
+          name: config
+          subPath: oneflow-server.conf
+        - mountPath: /var/lib/one/.one/oneflow_auth
+          name: oneadmin-one-keys
+          subPath: oneflow_auth
+      imagePullSecrets:
+      - name: regsecret
+      nodeSelector: {}
+      securityContext:
+        fsGroup: 9869
+        runAsUser: 9869
+      tolerations: []
+      volumes:
+      - configMap:
+          name: opennebula-oneflow
+        name: config
+      - name: oneadmin-one-keys
+        secret:
+          secretName: opennebula-one-keys

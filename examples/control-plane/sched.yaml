@@ -1,0 +1,45 @@
+---
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  labels:
+    ksonnet.io/component: sched
+  name: opennebula-sched
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: opennebula-sched
+  template:
+    metadata:
+      labels:
+        app: opennebula-sched
+    spec:
+      containers:
+      - command:
+        - /usr/bin/mm_sched
+        image: kvaps/opennebula
+        name: sched
+        ports:
+        - containerPort: 2633
+        volumeMounts:
+        - mountPath: /etc/one/sched.conf
+          name: config
+          subPath: sched.conf
+        - mountPath: /var/lib/one/.one/one_auth
+          name: oneadmin-one-keys
+          subPath: one_auth
+      imagePullSecrets:
+      - name: regsecret
+      nodeSelector: {}
+      securityContext:
+        fsGroup: 9869
+        runAsUser: 9869
+      tolerations: []
+      volumes:
+      - configMap:
+          name: opennebula-sched
+        name: config
+      - name: oneadmin-one-keys
+        secret:
+          secretName: opennebula-one-keys

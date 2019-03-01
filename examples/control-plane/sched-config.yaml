@@ -1,0 +1,13 @@
+---
+apiVersion: v1
+data:
+  sched.conf: "MESSAGE_SIZE = 1073741824\nTIMEOUT      = 60 \nONE_XMLRPC = \"http://opennebula:2633/RPC2\"\nSCHED_INTERVAL
+    = 30\nMAX_VM       = 5000\nMAX_DISPATCH = 30\nMAX_HOST     = 1\nLIVE_RESCHEDS
+    \ = 1\nMEMORY_SYSTEM_DS_SCALE = 0\nDEFAULT_SCHED = [\n   policy = 3,\n   rank
+    \  = \"PRIORITY - RUNNING_VMS\"\n]\nDEFAULT_DS_SCHED = [\n   policy = 1\n]\nLOG
+    = [\n  system      = \"std\",\n  debug_level = 5\n]\n"
+kind: ConfigMap
+metadata:
+  labels:
+    ksonnet.io/component: sched-config
+  name: opennebula-sched

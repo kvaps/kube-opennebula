@@ -1,0 +1,21 @@
+---
+apiVersion: v1
+data:
+  oneflow-server.conf: |
+    :one_xmlrpc: http://opennebula:2633/RPC2
+    :lcm_interval: 30
+    :host: 0.0.0.0
+    :port: 2474
+    :force_deletion: true
+    :default_cooldown: 300
+    :shutdown_action: 'terminate'
+    :action_number: 1
+    :action_period: 60
+    :vm_name_template: '$ROLE_NAME_$VM_NUMBER_(service_$SERVICE_ID)'
+    :core_auth: cipher
+    :debug_level: 2
+kind: ConfigMap
+metadata:
+  labels:
+    ksonnet.io/component: oneflow-config
+  name: opennebula-oneflow

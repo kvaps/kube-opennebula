@@ -1,11 +1,37 @@
+---
+apiVersion: v1
+data:
+
+  script.sh: |
+    #!/bin/sh
+    echo "Connfiguring oneadmin account"
+    rm -rf /host-root/var/lib/one/.ssh
+    cp -r /var/lib/one/.ssh /host-root/var/lib/one/.ssh
+    chown 9869:9869 -R /host-root/var/lib/one/.ssh
+    chmod 600 /host-root/var/lib/one/.ssh/id_rsa
+    sed -i '/Cmnd_Alias ONE_NET/ {/tcpdump/! s|$|, /usr/sbin/tcpdump|}' /host-root/etc/sudoers.d/opennebula
+
+    echo "Run additional connfiguration"
+    #
+    # Do some configuration here: eg. connect storages, configre networking
+    #
+    
+    # Sleep forever
+    exec tail -f /dev/null
+  
+kind: ConfigMap
+metadata:
+  labels:
+    ksonnet.io/component: config
+  name: opennebula-node
+---
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
+  labels:
+    ksonnet.io/component: daemonset
   name: opennebula-node
-  namespace: opennebula
 spec:
-  updateStrategy:
-    type: OnDelete
   selector:
     matchLabels:
       app: opennebula-node
@@ -14,112 +40,35 @@ spec:
       labels:
         app: opennebula-node
     spec:
+      containers:
+      - command:
+        - /bin/sh
+        - /config/script.sh
+        image: alpine
+        name: opennebula
+        securityContext:
+          capabilities:
+            add:
+            - NET_ADMIN
+        volumeMounts:
+        - mountPath: /host-root
+          name: host-root
+        - mountPath: /config
+          name: config
+        - mountPath: /var/lib/one/.ssh
+          name: oneadmin-ssh-config
+      hostIPC: true
+      hostNetwork: true
+      hostPID: true
       nodeSelector:
         opennebula-node: ""
-      hostNetwork: true
-      hostPID: false
-      hostIPC: true
-
-      initContainers:
-      - name: chown
-        image: kvaps/opennebula-node
-        securityContext:
-          privileged: true
-        command:
-        - "/bin/sh"
-        - "-c"
-        - |
-            mount -o remount,rw /var/lib/one/.ssh
-            chown oneadmin:oneadmin -R /var/lib/one/.ssh
-            chmod 700 -R /var/lib/one/.ssh
-            chown root:kvm /dev/kvm
-        volumeMounts:
-        - name: dev
-          mountPath: "/dev"
-        - name: oneadmin-ssh-config
-          mountPath: "/var/lib/one/.ssh"
-
-      containers:
-      - name: sshd
-        image: kvaps/opennebula-node
-        command: [ "/usr/sbin/sshd", "-D" ]
-        securityContext:
-          privileged: true
-        volumeMounts:
-        - name: onehost-ssh-config
-          mountPath: "/etc/ssh"
-        - name: oneadmin-ssh-config
-          mountPath: "/var/lib/one/.ssh"
-        - name: libvirt-run
-          mountPath: "/var/run/libvirt"
-        - name: modules
-          mountPath: "/lib/modules"
-
-        # OpenNebula Datastores
-        - name: system-ds
-          mountPath: "/var/lib/one/datastores/100"
-        - name: images-ds
-          mountPath: "/var/lib/one/datastores/101"
-
-      - name: libvirtd
-        image: kvaps/opennebula-node
-        command: [ "/usr/sbin/libvirtd" ]
-        securityContext:
-          privileged: true
-        volumeMounts:
-        - name: dev
-          mountPath: "/dev"
-        - name: dbus-lib
-          mountPath: "/var/lib/dbus"
-        - name: dbus-run
-          mountPath: "/var/run/dbus"
-        - name: libvirt-run
-          mountPath: "/var/run/libvirt"
-        - name: modules
-          mountPath: "/lib/modules"
-
-        # OpenNebula Datastores
-        - name: system-ds
-          mountPath: "/var/lib/one/datastores/100"
-        - name: images-ds
-          mountPath: "/var/lib/one/datastores/101"
-
-      - name: virtlogd
-        image: kvaps/opennebula-node
-        command: [ "/usr/sbin/virtlogd" ]
-        volumeMounts:
-        - name: libvirt-run
-          mountPath: "/var/run/libvirt"
-
-
       volumes:
-        - name: oneadmin-ssh-config
-          configMap:
-            name: oneadmin-ssh-config
-        - name: onehost-ssh-config
-          configMap:
-            name: onehost-ssh-config
-            defaultMode: 0600
-        - name: dev
-          mountPath: "/dev"
-        - name: libvirt-run
-          hostPath:
-            path: "/var/run/libvirt"
-        - name: dbus-run
-          hostPath:
-            path: "/var/run/dbus"
-        - name: dbus-lib
-          hostPath:
-            path: "/var/lib/dbus"
-        - name: modules
-          hostPath:
-            path: "/lib/modules"
-
-        # OpenNebula Datastores
-        - name: system-ds
-          hostPath:
-            path: "/var/lib/one/datastores/100"
-        - name: images-ds
-          nfs:
-            server: mynfsserver
-            path: "/data/opennebula-images"
+      - configMap:
+          name: opennebula-node
+        name: config
+      - hostPath:
+          path: /
+        name: host-root
+      - name: oneadmin-ssh-config
+        secret:
+          secretName: opennebula-ssh-keys

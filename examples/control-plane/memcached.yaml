@@ -1,0 +1,44 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    ksonnet.io/component: memcached
+  name: opennebula-sunstone-memcached
+spec:
+  clusterIP: None
+  ports:
+  - port: 11211
+    targetPort: 11211
+  selector:
+    app: opennebula-sunstone-memcached
+  type: ClusterIP
+---
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  labels:
+    ksonnet.io/component: memcached
+  name: opennebula-sunstone-memcached
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: opennebula-sunstone-memcached
+  template:
+    metadata:
+      labels:
+        app: opennebula-sunstone-memcached
+    spec:
+      containers:
+      - image: memcached:1.5.6-alpine
+        name: memcached
+        ports:
+        - containerPort: 11211
+      imagePullSecrets:
+      - name: regsecret
+      nodeSelector: {}
+      securityContext:
+        fsGroup: 9869
+        runAsUser: 9869
+      tolerations: []

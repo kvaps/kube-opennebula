@@ -1,0 +1,88 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    ksonnet.io/component: novnc
+  name: opennebula-sunstone-novnc
+spec:
+  ports:
+  - port: 29876
+    targetPort: 29876
+  selector:
+    app: opennebula-sunstone-novnc
+  type: ClusterIP
+---
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  labels:
+    ksonnet.io/component: novnc
+  name: opennebula-sunstone-novnc
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: opennebula-sunstone-novnc
+  template:
+    metadata:
+      labels:
+        app: opennebula-sunstone-novnc
+    spec:
+      containers:
+      - command:
+        - /usr/bin/ruby
+        - /usr/bin/novnc-server
+        - start
+        image: kvaps/opennebula-sunstone
+        name: novnc-proxy
+        ports:
+        - containerPort: 29876
+        volumeMounts:
+        - mountPath: /etc/one/sunstone-server.conf
+          name: config
+          subPath: sunstone-server.conf
+        - mountPath: /var/lib/one/sunstone_vnc_tokens
+          name: data
+          subPath: sunstone_vnc_tokens
+      imagePullSecrets:
+      - name: regsecret
+      nodeSelector: {}
+      securityContext:
+        fsGroup: 9869
+        runAsUser: 9869
+      tolerations: []
+      volumes:
+      - configMap:
+          name: opennebula-sunstone-novnc
+        name: config
+      - emptyDir: {}
+        name: data
+#---
+#apiVersion: extensions/v1beta1
+#kind: Ingress
+#metadata:
+#  annotations:
+#    certmanager.k8s.io/cluster-issuer: letsencrypt
+#    kubernetes.io/ingress.class: nginx
+#    nginx.ingress.kubernetes.io/configuration-snippet: |+
+#      proxy_set_header Upgrade $http_upgrade;
+#      proxy_set_header Connection $connection_upgrade;
+#      add_header Access-Control-Allow-Origin *;
+#
+#  labels:
+#    ksonnet.io/component: novnc
+#  name: opennebula-sunstone-novnc
+#spec:
+#  rules:
+#  - host: opennebula.example.org
+#    http:
+#      paths:
+#      - backend:
+#          serviceName: opennebula-sunstone-novnc
+#          servicePort: 29876
+#        path: /websockify
+#  tls:
+#  - hosts:
+#    - opennebula.example.org
+#    secretName: opennebula-sunstone-tls
