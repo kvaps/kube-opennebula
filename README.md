@@ -58,6 +58,8 @@ kubectl create -n opennebula-test -f examples/control-plane/oned.yaml
 
 Your hosts should have `libvirtd` and `qemu-kvm` installed and configured sudoersi, just place [opennebula.sudoers](https://github.com/OpenNebula/one/search?q=filename%3Aopennebula.sudoers) for your system into `/etc/sudoers.d/opennebula`, you can do that later in your custom script.
 
+Otherwise you can just install `opennebula-node` meta-package.
+
 * Download [opennebula-node.yaml](examples/opennebula-node.yaml) and modify `script.sh` for your needs, you can attach storage devices, configure host network there and etc.
 * Deploy daemonset:
 
