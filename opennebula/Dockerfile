@@ -26,6 +26,9 @@ RUN apt-get -y update \
 RUN sed -i 's/\(SYSTEM *= *\)"file"/\1"std"/' /etc/one/oned.conf \
  && sed -i 's/\(system *= *\)"file"/\1"std"/' /etc/one/sched.conf
 
+# Fix: https://github.com/OpenNebula/one/issues/3074
+RUN sed -i '/scp -rp/ s|/. |/* |' /usr/lib/one/ruby/CommandManager.rb /usr/lib/one/ruby/cli/one_helper/onehost_helper.rb
+
 USER oneadmin
 ENTRYPOINT [ "/usr/bin/oned", "-f" ]
 #ENTRYPOINT [ "/usr/bin/mm_sched" ]
