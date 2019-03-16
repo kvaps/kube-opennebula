@@ -19,8 +19,8 @@ cat opennebula-ssh-keys/id_rsa.pub > opennebula-ssh-keys/authorized_keys
 
 cat > opennebula-ssh-keys/config <<EOT
 Host *
+    LogLevel ERROR
     StrictHostKeyChecking no
-    Port 2222
     UserKnownHostsFile /dev/null
     GSSAPIAuthentication no
     User oneadmin
