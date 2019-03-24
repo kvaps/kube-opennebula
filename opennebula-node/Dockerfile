@@ -15,7 +15,7 @@ RUN echo "deb http://archive.ubuntu.com/ubuntu/ xenial main\ndeb http://archive.
 
 # Install opennebula-node
 RUN wget -q -O- https://downloads.opennebula.org/repo/repo.key | apt-key add - \
- && echo "deb https://downloads.opennebula.org/repo/5.6/Ubuntu/18.04 stable opennebula" > /etc/apt/sources.list.d/opennebula.list \
+ && echo "deb https://downloads.opennebula.org/repo/5.8/Ubuntu/18.04 stable opennebula" > /etc/apt/sources.list.d/opennebula.list \
  && apt-get -y update \
  && ln -s /bin/true /usr/local/bin/systemctl \
  && apt-get -y install opennebula-node \
