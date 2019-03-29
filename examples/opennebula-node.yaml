@@ -1,16 +1,58 @@
 ---
 apiVersion: v1
 data:
+  mounts: |
+    nfs100:/data/100 /var/lib/one/datastores/100 nfs noatime,nodiratime,vers=3
+    nfs100:/data/101 /var/lib/one/datastores/101 nfs noatime,nodiratime,vers=3
+    nfs100:/data/102 /var/lib/one/datastores/102 nfs noatime,nodiratime,vers=3
+    nfs100:/data/103 /var/lib/one/datastores/103 nfs noatime,nodiratime,vers=3
+
+  opennebula.sudoers: |
+    Defaults:oneadmin !requiretty
+    Defaults:oneadmin secure_path = /sbin:/bin:/usr/sbin:/usr/bin
+    Cmnd_Alias ONE_MISC = /sbin/mkfs, /bin/sync, /sbin/mkswap
+    Cmnd_Alias ONE_NET = /sbin/brctl, /sbin/ebtables, /sbin/iptables, /sbin/ip6tables, /sbin/ip, /sbin/ipset, /usr/bin/arping
+    Cmnd_Alias ONE_LVM = /sbin/lvcreate, /sbin/lvremove, /sbin/lvs, /sbin/vgdisplay, /sbin/lvchange, /sbin/lvscan, /sbin/lvextend
+    Cmnd_Alias ONE_ISCSI = /usr/bin/iscsiadm, /usr/sbin/tgt-admin, /usr/sbin/tgtadm
+    Cmnd_Alias ONE_OVS = /usr/bin/ovs-ofctl, /usr/bin/ovs-vsctl
+    Cmnd_Alias ONE_XEN = /usr/sbin/xentop, /usr/sbin/xl, /usr/sbin/xm
+    Cmnd_Alias ONE_CEPH = /usr/bin/rbd
+    Cmnd_Alias ONE_MARKET = /usr/lib/one/sh/create_container_image.sh
+    Cmnd_Alias ONE_HA = /bin/systemctl start opennebula-flow, /bin/systemctl stop opennebula-flow, /bin/systemctl start opennebula-gate, /bin/systemctl stop opennebula-gate, /usr/sbin/service opennebula-flow start, /usr/sbin/service opennebula-flow stop, /usr/sbin/service opennebula-gate start, /usr/sbin/service opennebula-gate stop
 
   script.sh: |
-    #!/bin/sh
+    host_exec() {
+      nsenter --target 1 --mount --uts --ipc --net --pid -- "$@" ;
+    }
+    host_copy() {
+      tar -C "$1" -chf- "$3" | host_exec tar -C "$2" -xf-
+    }
+    
     echo "Connfiguring oneadmin account"
-    rm -rf /host-root/var/lib/one/.ssh
-    cp -r /var/lib/one/.ssh /host-root/var/lib/one/.ssh
-    chown 9869:9869 -R /host-root/var/lib/one/.ssh
-    chmod 600 /host-root/var/lib/one/.ssh/id_rsa
-    sed -i '/Cmnd_Alias ONE_NET/ {/tcpdump/! s|$|, /usr/sbin/tcpdump|}' /host-root/etc/sudoers.d/opennebula
+    if ! $(host_exec getent passwd oneadmin >/dev/null); then
+      host_exec useradd -u 9869 -U -s /bin/bash -m -d /var/lib/one -G disk,kvm oneadmin
+    fi
+    host_exec rm -rf /var/lib/one/.ssh
+    host_copy /var/lib/one /var/lib/one .ssh
+    host_exec chown 9869:9869 -R /var/lib/one/.ssh
+    host_exec chmod 700 /var/lib/one/.ssh
+    host_exec chmod 600 /var/lib/one/.ssh/id_rsa
+    host_copy /config /etc/sudoers.d opennebula.sudoers
 
+    echo "Connecting NFS shares:"
+    while read share mountpoint fstype options; do
+      echo -n "  $share - "
+      host_exec mountpoint -q "$mountpoint" && echo ok && continue
+      host_exec mkdir -p "$mountpoint"
+      if host_exec mount -t "$fstype" -o "$options" "$share" "$mountpoint"; then
+        echo "ok (new)"
+      else
+        echo fail
+        FAILED=1
+      fi
+      host_exec chown 9869:9869 "$mountpoint"
+    done < /config/mounts
+    
     echo "Run additional connfiguration"
     #
     # Do some configuration here: eg. connect storages, configre networking
@@ -18,7 +60,7 @@ data:
     
     # Sleep forever
     exec tail -f /dev/null
-  
+
 kind: ConfigMap
 metadata:
   labels:
@@ -47,12 +89,8 @@ spec:
         image: alpine
         name: opennebula
         securityContext:
-          capabilities:
-            add:
-            - NET_ADMIN
+          privileged: true
         volumeMounts:
-        - mountPath: /host-root
-          name: host-root
         - mountPath: /config
           name: config
         - mountPath: /var/lib/one/.ssh
@@ -66,9 +104,6 @@ spec:
       - configMap:
           name: opennebula-node
         name: config
-      - hostPath:
-          path: /
-        name: host-root
       - name: oneadmin-ssh-config
         secret:
           secretName: opennebula-ssh-keys
