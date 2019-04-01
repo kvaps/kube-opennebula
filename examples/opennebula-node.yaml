@@ -38,6 +38,7 @@ data:
     host_exec chmod 700 /var/lib/one/.ssh
     host_exec chmod 600 /var/lib/one/.ssh/id_rsa
     host_copy /config /etc/sudoers.d opennebula.sudoers
+    host_exec mv -f /etc/sudoers.d/opennebula.sudoers /etc/sudoers.d/opennebula
 
     echo "Connecting NFS shares:"
     while read share mountpoint fstype options; do
