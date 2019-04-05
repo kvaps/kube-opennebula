@@ -8,7 +8,7 @@ RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selectio
 
 # Install opennebula-gems
 RUN wget -q -O- https://downloads.opennebula.org/repo/repo.key | apt-key add - \
- && echo "deb https://downloads.opennebula.org/repo/5.6/Ubuntu/18.04 stable opennebula" > /etc/apt/sources.list.d/opennebula.list \
+ && echo "deb https://downloads.opennebula.org/repo/5.8/Ubuntu/18.04 stable opennebula" > /etc/apt/sources.list.d/opennebula.list \
  && apt-get -y update \
  && apt-get -y install opennebula-tools \
  && apt-get -y clean \
@@ -19,7 +19,7 @@ RUN wget -q -O- https://downloads.opennebula.org/repo/repo.key | apt-key add - \
 
 # Install opennebula
 RUN apt-get -y update \
- && apt-get -y install opennebula less \
+ && apt-get -y install opennebula mysql-client less \
  && apt-get -y clean
 
 # Logging to /dev/stdout

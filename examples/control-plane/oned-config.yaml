@@ -30,11 +30,11 @@ data:
     ]
     RAFT = [
         LIMIT_PURGE          = 100000,
-        LOG_RETENTION        = 500000,
-        LOG_PURGE_TIMEOUT    = 600,
-        ELECTION_TIMEOUT_MS  = 2500,
+        LOG_RETENTION        = 250000,
+        LOG_PURGE_TIMEOUT    = 60,
+        ELECTION_TIMEOUT_MS  = 5000,
         BROADCAST_TIMEOUT_MS = 500,
-        XMLRPC_TIMEOUT_MS    = 450
+        XMLRPC_TIMEOUT_MS    = 1000
     ]
     DEFAULT_COST = [
         CPU_COST    = 0,
@@ -55,6 +55,11 @@ data:
     DEFAULT_CDROM_DEVICE_PREFIX = "hd"
     DEFAULT_IMAGE_TYPE           = "OS"
     IM_MAD = [
+          NAME          = "lxd",
+          SUNSTONE_NAME = "LXD",
+          EXECUTABLE    = "one_im_ssh",
+          ARGUMENTS     = "-r 3 -t 15 -w 90 lxd" ]
+    IM_MAD = [
           NAME       = "collectd",
           EXECUTABLE = "collectd",
           ARGUMENTS  = "-p 32124 -f 5 -t 50 -i 60" ]
@@ -69,6 +74,16 @@ data:
           EXECUTABLE    = "one_im_sh",
           ARGUMENTS     = "-c -t 15 -r 0 vcenter" ]
     VM_MAD = [
+        NAME           = "lxd",
+        SUNSTONE_NAME  = "LXD",
+        EXECUTABLE     = "one_vmm_exec",
+        ARGUMENTS      = "-t 15 -r 0 lxd",
+        # DEFAULT        = "vmm_exec/vmm_exec_lxd.conf",
+        TYPE           = "xml",
+        KEEP_SNAPSHOTS = "no",
+        IMPORTED_VMS_ACTIONS = "terminate, terminate-hard, reboot, reboot-hard, poweroff, poweroff-hard, suspend, resume, stop, delete,  nic-attach, nic-detach"
+    ]
+    VM_MAD = [
         NAME           = "kvm",
         SUNSTONE_NAME  = "KVM",
         EXECUTABLE     = "one_vmm_exec",
@@ -81,13 +96,14 @@ data:
             disk-detach, nic-attach, nic-detach, snapshot-create, snapshot-delete"
     ]
     VM_MAD = [
-        NAME           = "vcenter",
-        SUNSTONE_NAME  = "VMWare vCenter",
-        EXECUTABLE     = "one_vmm_sh",
-        ARGUMENTS      = "-p -t 15 -r 0 vcenter -s sh",
-        DEFAULT        = "vmm_exec/vmm_exec_vcenter.conf",
-        TYPE           = "xml",
-        KEEP_SNAPSHOTS = "yes",
+        NAME              = "vcenter",
+        SUNSTONE_NAME     = "VMWare vCenter",
+        EXECUTABLE        = "one_vmm_sh",
+        ARGUMENTS         = "-p -t 15 -r 0 vcenter -s sh",
+        DEFAULT           = "vmm_exec/vmm_exec_vcenter.conf",
+        TYPE              = "xml",
+        KEEP_SNAPSHOTS    = "yes",
+        DS_LIVE_MIGRATION = "yes",
         IMPORTED_VMS_ACTIONS = "terminate, terminate-hard, hold, release, suspend,
             resume, delete, reboot, reboot-hard, resched, unresched, poweroff,
             poweroff-hard, disk-attach, disk-detach, nic-attach, nic-detach,
@@ -103,7 +119,7 @@ data:
     ]
     MARKET_MAD = [
         EXECUTABLE = "one_market",
-        ARGUMENTS  = "-t 15 -m http,s3,one"
+        ARGUMENTS  = "-t 15 -m http,s3,one,linuxcontainers"
     ]
     IPAM_MAD = [
         EXECUTABLE = "one_ipam",
@@ -148,6 +164,22 @@ data:
     VM_RESTRICTED_ATTR = "NIC/VCENTER_INSTANCE_ID"
     VM_RESTRICTED_ATTR = "NIC/VCENTER_NET_REF"
     VM_RESTRICTED_ATTR = "NIC/VCENTER_PORTGROUP_TYPE"
+    VM_RESTRICTED_ATTR = "NIC/EXTERNAL"
+    VM_RESTRICTED_ATTR = "NIC_ALIAS/MAC"
+    VM_RESTRICTED_ATTR = "NIC_ALIAS/VLAN_ID"
+    VM_RESTRICTED_ATTR = "NIC_ALIAS/BRIDGE"
+    VM_RESTRICTED_ATTR = "NIC_DEFAULT/EXTERNAL"
+    VM_RESTRICTED_ATTR = "NIC_ALIAS/INBOUND_AVG_BW"
+    VM_RESTRICTED_ATTR = "NIC_ALIAS/INBOUND_PEAK_BW"
+    VM_RESTRICTED_ATTR = "NIC_ALIAS/INBOUND_PEAK_KB"
+    VM_RESTRICTED_ATTR = "NIC_ALIAS/OUTBOUND_AVG_BW"
+    VM_RESTRICTED_ATTR = "NIC_ALIAS/OUTBOUND_PEAK_BW"
+    VM_RESTRICTED_ATTR = "NIC_ALIAS/OUTBOUND_PEAK_KB"
+    VM_RESTRICTED_ATTR = "NIC_ALIAS/OPENNEBULA_MANAGED"
+    VM_RESTRICTED_ATTR = "NIC_ALIAS/VCENTER_INSTANCE_ID"
+    VM_RESTRICTED_ATTR = "NIC_ALIAS/VCENTER_NET_REF"
+    VM_RESTRICTED_ATTR = "NIC_ALIAS/VCENTER_PORTGROUP_TYPE"
+    VM_RESTRICTED_ATTR = "NIC_ALIAS/EXTERNAL"
     VM_RESTRICTED_ATTR = "NIC_DEFAULT/MAC"
     VM_RESTRICTED_ATTR = "NIC_DEFAULT/VLAN_ID"
     VM_RESTRICTED_ATTR = "NIC_DEFAULT/BRIDGE"
@@ -228,10 +260,16 @@ data:
     VNET_RESTRICTED_ATTR = "BRIDGE_CONF"
     VNET_RESTRICTED_ATTR = "OVS_BRIDGE_CONF"
     VNET_RESTRICTED_ATTR = "IP_LINK_CONF"
+    VNET_RESTRICTED_ATTR = "FILTER_IP_SPOOFING"
+    VNET_RESTRICTED_ATTR = "FILTER_MAC_SPOOFING"
     VNET_RESTRICTED_ATTR = "AR/VN_MAD"
     VNET_RESTRICTED_ATTR = "AR/PHYDEV"
     VNET_RESTRICTED_ATTR = "AR/VLAN_ID"
     VNET_RESTRICTED_ATTR = "AR/BRIDGE"
+    VNET_RESTRICTED_ATTR = "AR/FILTER_IP_SPOOFING"
+    VNET_RESTRICTED_ATTR = "AR/FILTER_MAC_SPOOFING"
+    VNET_RESTRICTED_ATTR = "CLUSTER_IDS"
+    VNET_RESTRICTED_ATTR = "EXTERNAL"
     INHERIT_DATASTORE_ATTR  = "CEPH_HOST"
     INHERIT_DATASTORE_ATTR  = "CEPH_SECRET"
     INHERIT_DATASTORE_ATTR  = "CEPH_KEY"
@@ -272,6 +310,7 @@ data:
     INHERIT_VNET_ATTR       = "BRIDGE_CONF"
     INHERIT_VNET_ATTR       = "OVS_BRIDGE_CONF"
     INHERIT_VNET_ATTR       = "IP_LINK_CONF"
+    INHERIT_VNET_ATTR       = "EXTERNAL"
     INHERIT_VNET_ATTR       = "VCENTER_NET_REF"
     INHERIT_VNET_ATTR       = "VCENTER_SWITCH_NAME"
     INHERIT_VNET_ATTR       = "VCENTER_SWITCH_NPORTS"
@@ -296,7 +335,8 @@ data:
     ]
     TM_MAD_CONF = [
         NAME = "qcow2", LN_TARGET = "NONE", CLONE_TARGET = "SYSTEM", SHARED = "YES",
-        DRIVER = "qcow2"
+        DS_MIGRATE = "YES", TM_MAD_SYSTEM = "ssh", LN_TARGET_SSH = "SYSTEM",
+        CLONE_TARGET_SSH = "SYSTEM", DISK_TYPE_SSH = "FILE", DRIVER = "qcow2"
     ]
     TM_MAD_CONF = [
         NAME = "ssh", LN_TARGET = "SYSTEM", CLONE_TARGET = "SYSTEM", SHARED = "NO",
@@ -304,8 +344,10 @@ data:
     ]
     TM_MAD_CONF = [
         NAME = "ceph", LN_TARGET = "NONE", CLONE_TARGET = "SELF", SHARED = "YES",
-        DS_MIGRATE = "NO", DRIVER = "raw", ALLOW_ORPHANS="yes", TM_MAD_SYSTEM = "ssh",
-        LN_TARGET_SSH = "SYSTEM", CLONE_TARGET_SSH = "SYSTEM", DISK_TYPE_SSH = "FILE"
+        DS_MIGRATE = "NO", DRIVER = "raw", ALLOW_ORPHANS="mixed",
+        TM_MAD_SYSTEM = "ssh,shared", LN_TARGET_SSH = "SYSTEM", CLONE_TARGET_SSH = "SYSTEM",
+        DISK_TYPE_SSH = "FILE", TM_MAD_SYSTEM = "shared", LN_TARGET_SHARED = "NONE",
+        CLONE_TARGET_SHARED = "SELF", DISK_TYPE_SHARED = "RBD"
     ]
     TM_MAD_CONF = [
         NAME = "iscsi_libvirt", LN_TARGET = "NONE", CLONE_TARGET = "SELF", SHARED = "YES",
@@ -366,6 +408,13 @@ data:
         REQUIRED_ATTRS = "ACCESS_KEY_ID,SECRET_ACCESS_KEY,REGION,BUCKET",
         APP_ACTIONS = "create, delete, monitor"
     ]
+    MARKET_MAD_CONF = [
+        NAME = "linuxcontainers",
+        SUNSTONE_NAME = "LinuxContainers.org",
+        REQUIRED_ATTRS = "",
+        APP_ACTIONS = "monitor",
+        PUBLIC = "yes"
+    ]
     AUTH_MAD_CONF = [
         NAME = "core",
         PASSWORD_CHANGE = "YES",
@@ -407,6 +456,42 @@ data:
         PASSWORD_CHANGE = "NO",
         DRIVER_MANAGED_GROUPS = "NO",
         MAX_TOKEN_TIME = "-1"
+    ]
+    VN_MAD_CONF = [
+        NAME = "dummy",
+        BRIDGE_TYPE = "linux"
+    ]
+    VN_MAD_CONF = [
+        NAME = "802.1Q",
+        BRIDGE_TYPE = "linux"
+    ]
+    VN_MAD_CONF = [
+        NAME = "ebtables",
+        BRIDGE_TYPE = "linux"
+    ]
+    VN_MAD_CONF = [
+        NAME = "fw",
+        BRIDGE_TYPE = "linux"
+    ]
+    VN_MAD_CONF = [
+        NAME = "ovswitch",
+        BRIDGE_TYPE = "openvswitch"
+    ]
+    VN_MAD_CONF = [
+        NAME = "vxlan",
+        BRIDGE_TYPE = "linux"
+    ]
+    VN_MAD_CONF = [
+        NAME = "vcenter",
+        BRIDGE_TYPE = "vcenter_port_groups"
+    ]
+    VN_MAD_CONF = [
+        NAME = "ovswitch_vxlan",
+        BRIDGE_TYPE = "openvswitch"
+    ]
+    VN_MAD_CONF = [
+        NAME = "bridge",
+        BRIDGE_TYPE = "linux"
     ]
 kind: ConfigMap
 metadata:
