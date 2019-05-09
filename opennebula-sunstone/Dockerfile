@@ -1,4 +1,5 @@
 FROM ubuntu:18.04
+ARG VERSION=5.8.1
 
 # Configure dpkg
 RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections \
