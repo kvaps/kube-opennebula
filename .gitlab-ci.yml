@@ -9,7 +9,7 @@ build_image:
   stage: build
   tags: [ "docker1" ]
   script:
-  - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+  #- docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
 
   - docker build -t $OPENNEBULA_IMAGE_TAG:$CI_COMMIT_REF_NAME opennebula
   - docker build -t $OPENNEBULA_SUNSTONE_IMAGE_TAG:$CI_COMMIT_REF_NAME opennebula-sunstone
