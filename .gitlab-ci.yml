@@ -1,30 +1,13 @@
-variables:
-  OPENNEBULA_IMAGE_TAG: $CI_REGISTRY_IMAGE/opennebula
-  OPENNEBULA_SUNSTONE_IMAGE_TAG: $CI_REGISTRY_IMAGE/opennebula-sunstone
-  OPENNEBULA_GATE_IMAGE_TAG: $CI_REGISTRY_IMAGE/opennebula-gate
-  OPENNEBULA_FLOW_IMAGE_TAG: $CI_REGISTRY_IMAGE/opennebula-flow
-  OPENNEBULA_APPMARKET_IMAGE_TAG: $CI_REGISTRY_IMAGE/opennebula-appmarket
-
 build_image:
   stage: build
-  tags: [ "docker1" ]
+  tags: [ "docker3" ]
+  only:
+    refs:
+    - tags
+    changes:
+    - dockerfiles/**/*
+    - .gitlab-ci.yml
   script:
   #- docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
-
-  - docker build -t $OPENNEBULA_IMAGE_TAG:$CI_COMMIT_REF_NAME opennebula
-  - docker build -t $OPENNEBULA_SUNSTONE_IMAGE_TAG:$CI_COMMIT_REF_NAME opennebula-sunstone
-  - docker build -t $OPENNEBULA_GATE_IMAGE_TAG:$CI_COMMIT_REF_NAME opennebula-gate
-  - docker build -t $OPENNEBULA_FLOW_IMAGE_TAG:$CI_COMMIT_REF_NAME opennebula-flow
-  - docker build -t $OPENNEBULA_APPMARKET_IMAGE_TAG:$CI_COMMIT_REF_NAME opennebula-appmarket
-
-  - docker push $OPENNEBULA_IMAGE_TAG:$CI_COMMIT_REF_NAME
-  - docker push $OPENNEBULA_SUNSTONE_IMAGE_TAG:$CI_COMMIT_REF_NAME
-  - docker push $OPENNEBULA_GATE_IMAGE_TAG:$CI_COMMIT_REF_NAME
-  - docker push $OPENNEBULA_FLOW_IMAGE_TAG:$CI_COMMIT_REF_NAME
-  - docker push $OPENNEBULA_APPMARKET_IMAGE_TAG:$CI_COMMIT_REF_NAME
-
-  - "[ $CI_COMMIT_REF_NAME == master ] && docker tag $OPENNEBULA_IMAGE_TAG:$CI_COMMIT_REF_NAME $OPENNEBULA_IMAGE_TAG && docker push $OPENNEBULA_IMAGE_TAG || true"
-  - "[ $CI_COMMIT_REF_NAME == master ] && docker tag $OPENNEBULA_SUNSTONE_IMAGE_TAG:$CI_COMMIT_REF_NAME $OPENNEBULA_SUNSTONE_IMAGE_TAG && docker push $OPENNEBULA_SUNSTONE_IMAGE_TAG || true"
-  - "[ $CI_COMMIT_REF_NAME == master ] && docker tag $OPENNEBULA_GATE_IMAGE_TAG:$CI_COMMIT_REF_NAME $OPENNEBULA_GATE_IMAGE_TAG && docker push $OPENNEBULA_GATE_IMAGE_TAG || true"
-  - "[ $CI_COMMIT_REF_NAME == master ] && docker tag $OPENNEBULA_FLOW_IMAGE_TAG:$CI_COMMIT_REF_NAME $OPENNEBULA_FLOW_IMAGE_TAG && docker push $OPENNEBULA_FLOW_IMAGE_TAG || true"
-  - "[ $CI_COMMIT_REF_NAME == master ] && docker tag $OPENNEBULA_APPMARKET_IMAGE_TAG:$CI_COMMIT_REF_NAME $OPENNEBULA_APPMARKET_IMAGE_TAG && docker push $OPENNEBULA_APPMARKET_IMAGE_TAG || true"
+  - dockerfiles/build.sh
+  - dockerfiles/push.sh

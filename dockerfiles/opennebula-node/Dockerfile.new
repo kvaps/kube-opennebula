@@ -1,0 +1,93 @@
+FROM ubuntu:18.04 as builder
+
+ARG QEMU_VERSION=4.0.0
+ARG LIBVIRT_VERSION=5.3.0
+
+RUN apt-get -y update \
+ && apt-get -y install \
+      curl \
+      xz-utils \
+  && echo "deb-src http://archive.ubuntu.com/ubuntu bionic-updates main restricted universe multiverse" \
+       > /etc/apt/sources.list.d/bionic-udates-src.list \
+  && apt-get -y update \
+  && apt-get -y build-dep qemu libvirt
+
+# Compile libvirt
+RUN curl https://libvirt.org/sources/libvirt-${LIBVIRT_VERSION}.tar.xz | tar xJf - \
+  && cd libvirt-${LIBVIRT_VERSION} \
+  && ./configure \
+       --enable-static \
+       --prefix=/opt \
+       --sysconfdir=/opt/etc \
+       --localstatedir=/opt/var \
+       --with-qemu=yes \
+       --without-xenapi \
+       --without-esx \
+       --without-lxc \
+       --without-uml \
+       --without-libxl \
+       --without-openvz \
+       --without-vmware \
+       --without-bhyve \
+       --without-hyperv \
+       --without-polkit \
+       --without-glusterfs \
+       --without-numad \
+       --without-avahi \
+       --without-secdriver-apparmor \
+       --with-qemu-user=oneadmin \
+       --with-qemu-group=oneadmin \
+  && make
+
+# Make binary
+RUN cd libvirt-${LIBVIRT_VERSION} \
+  && make install DESTDIR=/tmp/libvirt-${LIBVIRT_VERSION} \
+  && tar cpzf /libvirt.tar.gz -C /tmp/libvirt-${LIBVIRT_VERSION} . \
+  && rm -rf /libvirt-${LIBVIRT_VERSION} /tmp/libvirt-${LIBVIRT_VERSION}
+
+# Compile qemu
+RUN curl https://download.qemu.org/qemu-${QEMU_VERSION}.tar.xz | tar xJf - \
+  && cd qemu-${QEMU_VERSION} \
+  && ./configure \
+       --static \
+       --disable-system \
+       --enable-linux-user \
+       --prefix=/opt \
+       --sysconfdir=/opt/etc \
+       --localstatedir=/opt/var \
+  && make
+
+# Make binary
+RUN cd qemu-${QEMU_VERSION} \
+  && make install DESTDIR=/tmp/qemu-${QEMU_VERSION} \
+  && tar cpzf /qemu.tar.gz -C /tmp/qemu-${QEMU_VERSION} . \
+  && rm -rf /qemu-${QEMU_VERSION} /tmp/qemu-${QEMU_VERSION}
+
+
+
+## Configure dpkg
+#RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections \
+# && apt-get -y update \
+# && apt-get -y install wget apt-transport-https gnupg \
+# && apt-get -y clean
+#
+#
+#
+#
+## Backport qemu-kvm from xenial (https://bugs.launchpad.net/ubuntu/+source/libvirt/+bug/1710960)
+#RUN echo "deb http://archive.ubuntu.com/ubuntu/ xenial main\ndeb http://archive.ubuntu.com/ubuntu/ xenial-updates main" >> /etc/apt/sources.list \
+# && apt-get -y update \
+# && apt-get -y install qemu-utils/xenial-updates qemu-block-extra/xenial-updates qemu-kvm/xenial-updates qemu-system-x86/xenial-updates qemu-system-common/xenial-updates ipxe-qemu/xenial-updates acl libacl1 \
+# && apt-get -y clean \
+# && apt-mark hold qemu-utils qemu-block-extra qemu-kvm qemu-system-x86 qemu-system-common ipxe-qemu
+#
+## Install opennebula-node
+#RUN wget -q -O- https://downloads.opennebula.org/repo/repo.key | apt-key add - \
+# && echo "deb https://downloads.opennebula.org/repo/5.8/Ubuntu/18.04 stable opennebula" > /etc/apt/sources.list.d/opennebula.list \
+# && apt-get -y update \
+# && ln -s /bin/true /usr/local/bin/systemctl \
+# && apt-get -y install opennebula-node \
+# && mkdir -p /var/run/sshd \
+# && rm -f /etc/libvirt/qemu/networks/autostart/default.xml \
+# && rm -f /usr/local/bin/systemctl \
+# && apt-get -y clean
