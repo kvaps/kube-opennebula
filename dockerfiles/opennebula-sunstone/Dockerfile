@@ -15,7 +15,7 @@ WORKDIR /opennebula-$VERSION
 
 # Make docs
 RUN cd share/man \
- && ./build.sh \
+ && ./build.sh
 
 # Make sunstone
 RUN cd src/sunstone/public \
