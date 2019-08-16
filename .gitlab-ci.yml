@@ -1,5 +1,8 @@
-build_image:
-  stage: build
+stages:
+  - build
+  - push
+
+.docker_images:
   tags: [ "docker3" ]
   only:
     refs:
@@ -7,7 +10,17 @@ build_image:
     changes:
     - dockerfiles/**/*
     - .gitlab-ci.yml
+  before_script:
+  - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+
+build_images:
+  stage: build
+  extends: .docker_images
   script:
-  #- docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
   - dockerfiles/build.sh
+
+push_images:
+  stage: push
+  extends: .docker_images
+  script:
   - dockerfiles/push.sh
