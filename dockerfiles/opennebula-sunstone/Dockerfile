@@ -13,6 +13,9 @@ RUN wget -O - https://github.com/OpenNebula/one/archive/release-$VERSION.tar.gz 
  && mv one-release-$VERSION opennebula-$VERSION
 WORKDIR /opennebula-$VERSION
 
+# Apply patches
+RUN curl https://patch-diff.githubusercontent.com/raw/OpenNebula/one/pull/3569.patch | patch -p1
+
 # Make docs
 RUN cd share/man \
  && ./build.sh
