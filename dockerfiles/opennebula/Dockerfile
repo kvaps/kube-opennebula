@@ -1,5 +1,5 @@
 FROM ubuntu:18.04 as builder
-ARG VERSION=5.8.4
+ARG VERSION=5.8.5
 
 # Install build dependencies
 RUN apt-get update \
@@ -12,6 +12,9 @@ RUN apt-get update \
 RUN wget -O - https://github.com/OpenNebula/one/archive/release-$VERSION.tar.gz | tar xzf - \
  && mv one-release-$VERSION opennebula-$VERSION
 WORKDIR /opennebula-$VERSION
+
+# Apply patches
+RUN curl https://patch-diff.githubusercontent.com/raw/OpenNebula/one/pull/3569.patch | patch -p1
 
 # Make docs
 RUN cd share/man \

@@ -1,5 +1,5 @@
 FROM ubuntu:18.04 as builder
-ARG VERSION=5.8.4
+ARG VERSION=5.8.5
 
 # Install build dependencies
 RUN apt-get update \
