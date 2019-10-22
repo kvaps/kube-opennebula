@@ -48,8 +48,7 @@ FROM ubuntu:18.04
 COPY --from=builder packages/opennebula-common_*.deb packages/ruby-opennebula_*_all.deb packages/opennebula-tools_*.deb /packages/
 RUN apt-get update \
  && apt-get -y install /packages/*.deb \
- && sed -i 's/apt-get install/apt-get -y install/g' /usr/share/one/install_gems \
- && echo '0\n' | /usr/share/one/install_gems \
+ && echo '0\n' | /usr/share/one/install_gems --yes \
  && mkdir -p /var/log/one /var/lock/one \
  && apt-get -y clean \
  && chown oneadmin: /var/log/one /var/lock/one
