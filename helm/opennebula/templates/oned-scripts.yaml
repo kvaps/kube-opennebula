@@ -1,10 +1,12 @@
+{{- if .Values.oned.enabled }}
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: opennebula-scripts
+  name: {{ template "opennebula.fullname" . }}-scripts
 data:
   init.sh: |+
 {{- .Files.Get "scripts/init.sh" | nindent 4 }}
   readiness-probe.sh: |+
 {{- .Files.Get "scripts/readiness-probe.sh" | nindent 4 }}
+{{- end }}

@@ -1,0 +1,26 @@
+{{- if and .Values.persistence.shared.enabled (not .Values.persistence.shared.existingClaim) }}
+{{- $fullName := include "opennebula.fullname" . -}}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ $fullName }}-shared
+  labels:
+    app: {{ $fullName }}-shared
+  {{- with .Values.persistence.shared.annotations  }}
+  annotations:
+{{ toYaml . | indent 4 }}
+  {{- end }}
+  {{- with .Values.persistence.shared.finalizers  }}
+  finalizers:
+{{ toYaml . | indent 4 }}
+  {{- end }}
+spec:
+  accessModes:
+    {{- range .Values.persistence.shared.accessModes }}
+    - {{ . | quote }}
+    {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.shared.size | quote }}
+  storageClassName: {{ .Values.persistence.shared.storageClassName }}
+{{- end -}}

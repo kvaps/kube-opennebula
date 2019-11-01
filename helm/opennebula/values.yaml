@@ -1,19 +1,26 @@
+timezone: Europe/Prague
+
 oned:
   enabled: true
+  labels: {}
+
+  replicas: 3
+  createCluster: 1
+
   image:
-    repository: kvaps/opennebula
-    tag: v5.8.5
+    repository: docker.io/kvaps/opennebula
+    tag: tight-integration
     pullPolicy: IfNotPresent
     pullSecrets:
       - name: regsecret
 
-  # nodeSelector:
-  #   node-role.kubernetes.io/master: ""
+  nodeSelector:
+    node-role.kubernetes.io/master: ""
   
-  # tolerations:
-  #   - key: node-role.kubernetes.io/master
-  #     operator: Exists
-  #     effect: NoSchedule
+  tolerations:
+    - key: node-role.kubernetes.io/master
+      operator: Exists
+      effect: NoSchedule
 
   oneadminPasswd: asdasdASD
   serveradminPasswd: vae7thailahh7kiexa2phaipooChah
@@ -21,6 +28,7 @@ oned:
 
   # Database config
   db:
+    enabled: true
     backend: mysql
     server: 127.0.0.1
     port: 3306
@@ -30,5 +38,72 @@ oned:
     connections: 50
     rootPasswd: vahch9saz6ogeaP4ou7P
 
+    image:
+      repository: docker.io/library/mysql
+      tag: 8.0.18
+      pullPolicy: IfNotPresent
+
+  collectd:
+    port: 32155
+    nodePort: 32155
+
+  service:
+    labels: {}
+    port: 2633
+
+  ingress:
+    enabled: true
+    labels: {}
+
+    ## Annotations.
+    ##
+    # annotations: {}
+    annotations:
+      kubernetes.io/ingress.class: nginx
+      kubernetes.io/tls-acme: "true"
+
+
+    ## Hostnames.
+    ## Must be provided if Ingress is enabled.
+    ##
+    # hosts: []
+    hosts:
+      - opennebula.example.org
+
+    ## TLS configuration for Prometheus Ingress
+    ## Secret must be manually created in the namespace
+    ##
+    # tls: []
+    tls:
+      - secretName: opennebula-tls
+        hosts:
+          - opennebula.example.org
+
+persistence:
+  data:
+    enabled: false
+    # storageClassName: default
+    accessModes:
+      - ReadWriteOnce
+    size: 10Gi
+    # annotations: {}
+    finalizers:
+      - kubernetes.io/pvc-protection
+    # subPath: ""
+    # existingClaim:
+
+  shared:
+    enabled: false
+    # storageClassName: default
+    accessModes:
+      - ReadWriteMany
+    size: 10Gi
+    # annotations: {}
+    finalizers:
+      - kubernetes.io/pvc-protection
+    # subPath: ""
+    # existingClaim:
+
 externalNode:
+  enabled: false
   mounts:

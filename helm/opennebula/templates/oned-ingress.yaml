@@ -1,20 +1,33 @@
+{{- if and .Values.oned.enabled .Values.oned.ingress.enabled }}
+{{- $fullName := include "opennebula.fullname" . -}}
+{{- $servicePort := .Values.oned.service.port -}}
 ---
 apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
+  name: {{ $fullName }}-oned
+  labels:
+    app: {{ $fullName }}-oned
+{{- if .Values.oned.ingress.labels }}
+{{ toYaml .Values.oned.ingress.labels | indent 4 }}
+{{- end }}
+{{- with .Values.oned.ingress.annotations }}
   annotations:
-    kubernetes.io/ingress.class: nginx
-  name: opennebula-oned
+{{ toYaml . | indent 4 }}
+{{- end }}
 spec:
   rules:
-  - host: opennebula.example.org
+  {{- range .Values.oned.ingress.hosts }}
+  - host: {{ . }}
     http:
       paths:
       - path: /RPC2
         backend:
-          serviceName: opennebula-oned
-          servicePort: 2633
+          serviceName: {{ $fullName }}-oned
+          servicePort:  {{ $servicePort }}
+  {{- end }}
+{{- if .Values.oned.ingress.tls }}
   tls:
-  - hosts:
-    - opennebula.example.org
-    secretName: opennebula-oned-tls
+{{ toYaml .Values.oned.ingress.tls | indent 4 }}
+{{- end }}
+{{- end }}
