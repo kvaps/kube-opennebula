@@ -66,7 +66,8 @@ RUN apt-get -y update \
  && apt-get -y clean
 
 # Fix permissions
-RUN chown -R oneadmin:oneadmin /etc/one
+RUN mkdir -p /var/run/one \
+ && chown -R oneadmin:oneadmin /etc/one /var/run/one
 
 # Logging to /dev/stdout
 RUN sed -i 's/\(SYSTEM *= *\)"file"/\1"std"/' /etc/one/oned.conf \

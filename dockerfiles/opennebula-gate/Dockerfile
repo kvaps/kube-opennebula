@@ -62,7 +62,8 @@ RUN apt-get -y update \
  && apt-get -y clean
 
 # Fix permissions
-RUN chown -R oneadmin:oneadmin /etc/one
+RUN mkdir -p /var/run/one \
+ && chown -R oneadmin:oneadmin /etc/one /var/run/one
 
 # Logging to /dev/stdout
 RUN sed -i 's|^\(ONEGATE_LOG *=\).*|\1 "/dev/stdout"|' /usr/lib/one/onegate/onegate-server.rb
