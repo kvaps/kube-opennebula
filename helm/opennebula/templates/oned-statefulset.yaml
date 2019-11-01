@@ -1,3 +1,4 @@
+{{- if .Values.oned.enabled }}
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -137,3 +138,5 @@ spec:
         emptyDir:
       #  persistentVolumeClaim:
       #    claimName: opennebula-shared
+      #
+{{- end }}

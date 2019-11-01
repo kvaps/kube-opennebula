@@ -1,3 +1,4 @@
+{{- if .Values.oned.enabled }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -6,3 +7,4 @@ metadata:
 data:
   oned.conf: |+
 {{- .Files.Get "config/oned.conf" | nindent 4 }}
+{{- end }}

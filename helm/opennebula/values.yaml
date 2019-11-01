@@ -21,6 +21,7 @@ oned:
 
   # Database config
   db:
+    enabled: true
     backend: mysql
     server: 127.0.0.1
     port: 3306
@@ -29,6 +30,9 @@ oned:
     dbName: opennebula
     connections: 50
     rootPasswd: vahch9saz6ogeaP4ou7P
+
+  ingress:
+    enabled: true
 
 externalNode:
   mounts:
