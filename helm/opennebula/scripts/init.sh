@@ -193,6 +193,14 @@ perform_upgrade() {
   fi
 }
 
+# Sets MY_ID
+load_my_id(){
+  MY_ID=$(echo "$HOSTNAME" | awk -F- '{print $NF}')
+  if ! [[ "$MY_ID" =~ ^[0-9]+$ ]]; then
+    fatal "hostname does not contain instance_id suffix"
+  fi
+}
+
 # Bootstraps new node
 perform_bootstrap() {
   if [ -z "$DB_BACKEND" ]; then
@@ -291,22 +299,13 @@ perform_bootstrap() {
     fatal "can not get zone $FEDERATION_ZONE_ID from $LEADER_XMLRPC"
   fi
 
-  until
-    COMMITS=$(ONE_XMLRPC="$LEADER_XMLRPC" onezone show -x 0 | /var/lib/one/remotes/datastore/xpath.rb 'concat(/ZONE/SERVER_POOL/SERVER/COMMIT)' | tr -d '\0' | grep -o '[0-9]\+' | sort -u);
-    [ "$(echo "$COMMITS" | wc -l)" = "1" ]
-  do
-    info "not all servers fully syncronized yet. waiting 10 sec (commits: $(echo "$COMMITS" | xargs))"
-    sleep 10
-  done
-
-  if [ -n "$(ONE_XMLRPC="$LEADER_XMLRPC" onezone show "$FEDERATION_ZONE_ID" -x | /var/lib/one/remotes/datastore/xpath.rb "/ZONE/SERVER_POOL/SERVER[NAME=\"$HOSTNAME\"]/NAME)" | tr -d '\0')" ]; then
-    info "$HOSTNAME already member of zone $FEDERATION_ZONE_ID"
-  else
-    info "adding $HOSTNAME to zone $FEDERATION_ZONE_ID via $LEADER_XMLRPC"
-    ONE_XMLRPC="$LEADER_XMLRPC" onezone server-add "$FEDERATION_ZONE_ID" --name "$HOSTNAME" --rpc "$MY_XMLRPC"
-    if [ $? -ne 0 ]; then
-      fatal "can not add server to zone $FEDERATION_ZONE_ID via $LEADER_XMLRPC"
-    fi
+  unset RETRY
+  if [ "$FEDERATION_SERVER_ID" != "0" ]; then
+    PREVIOUS_HOSTNAME="${HOSTNAME%-*}-$((FEDERATION_SERVER_ID-1))"
+    until [ -n "$(ONE_XMLRPC="$LEADER_XMLRPC" onezone show "$FEDERATION_ZONE_ID" -x | /var/lib/one/remotes/datastore/xpath.rb "/ZONE/SERVER_POOL/SERVER[NAME=\"$PREVIOUS_HOSTNAME\"]/NAME)" | tr -d '\0')" ]; do
+      info "waiting until $PREVIOUS_HOSTNAME be deployed (retry $((RETRY++)))"
+      sleep 10
+    done
   fi
 
   info "downloading data from mysql://$DB_USER@$LEADER_IP:$DB_PORT/$DB_NAME"
@@ -319,9 +318,21 @@ perform_bootstrap() {
   else
     info "database succesfully bootstraped"
   fi
-  rm -f "$MYSQL_OPTS"
 
-  unset RETRY
+  if [ -n "$(ONE_XMLRPC="$LEADER_XMLRPC" onezone show "$FEDERATION_ZONE_ID" -x | /var/lib/one/remotes/datastore/xpath.rb "/ZONE/SERVER_POOL/SERVER[NAME=\"$HOSTNAME\"]/NAME)" | tr -d '\0')" ]; then
+    info "$HOSTNAME already member of zone $FEDERATION_ZONE_ID"
+  else
+    info "adding $HOSTNAME to zone $FEDERATION_ZONE_ID via $LEADER_XMLRPC"
+    ONE_XMLRPC="$LEADER_XMLRPC" onezone server-add "$FEDERATION_ZONE_ID" --name "$HOSTNAME" --rpc "$MY_XMLRPC"
+    if [ $? -ne 0 ]; then
+      # Ereasing LOCAL_VERSION and die
+      mysql --defaults-file="$MYSQL_OPTS" -u "$DB_USER" -h "$DB_SERVER" -P "$DB_PORT" "$DB_NAME" -e 'DROP TABLE IF EXISTS `local_db_versioning`;'
+      rm -f "$MYSQL_OPTS"
+      fatal "can not add server to zone $FEDERATION_ZONE_ID via $LEADER_XMLRPC"
+    fi
+  fi
+
+  rm -f "$MYSQL_OPTS"
   info "bootstrap procedure finished"
 }
 
@@ -397,12 +408,9 @@ main() {
   load_db_config
   load_federation_config
   load_version_info
+  load_my_id
 
   # Override SERVER_ID by MY_ID
-  MY_ID=$(echo "$HOSTNAME" | awk -F- '{print $NF}')
-  if ! [[ "$MY_ID" =~ ^[0-9]+$ ]]; then
-    fatal "hostname does not contain instance_id suffix"
-  fi
   FEDERATION_SERVER_ID="$MY_ID"
 
   setup_keys
