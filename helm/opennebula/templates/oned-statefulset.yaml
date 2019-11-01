@@ -18,6 +18,30 @@ spec:
         app: opennebula-oned
     spec:
       containers:
+      - name: mysql
+        image: docker.io/library/mysql:8.0.18
+        volumeMounts:
+        - mountPath: /etc/localtime
+          name: timezone
+          readOnly: true
+        - name: data
+          mountPath: /var/lib/mysql
+        env:
+        - name: MYSQL_USER
+          value: oneadmin
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: mysqlPassword
+              name: opennebula-db-keys
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: mysqlRootPassword
+              name: opennebula-db-keys
+        - name: MYSQL_DATABASE
+          value: opennebula
+
       - name: oned
         image: kvaps/opennebula:tight-integration
         command: [ '/scripts/init.sh' ]
@@ -27,6 +51,10 @@ spec:
           - name: collectd
             containerPort: 4124
             protocol: UDP
+        lifecycle:
+          preStop:
+            exec:
+              command: [ "/usr/bin/one", "stop" ]
         env:
         - name: CREATE_CLUSTER
           value: '1'
@@ -71,29 +99,7 @@ spec:
             - /scripts/readiness-probe.sh
           initialDelaySeconds: 5
           periodSeconds: 5
-      - name: mysql
-        image: docker.io/library/mysql:8.0.18
-        volumeMounts:
-        - mountPath: /etc/localtime
-          name: timezone
-          readOnly: true
-        - name: data
-          mountPath: /var/lib/mysql
-        env:
-        - name: MYSQL_USER
-          value: oneadmin
-        - name: MYSQL_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              key: mysqlPassword
-              name: opennebula-db-keys
-        - name: MYSQL_ROOT_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              key: mysqlRootPassword
-              name: opennebula-db-keys
-        - name: MYSQL_DATABASE
-          value: opennebula
+      terminationGracePeriodSeconds: 30
       imagePullSecrets:
       - name: regsecret
       nodeSelector:
@@ -131,4 +137,3 @@ spec:
         emptyDir:
       #  persistentVolumeClaim:
       #    claimName: opennebula-shared
-
