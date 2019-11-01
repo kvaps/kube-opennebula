@@ -56,5 +56,4 @@ RUN apt-get -y update \
  && apt-get -y clean
 
 # Fix permissions
-RUN mkdir -p /var/run/one \
- && chown -R oneadmin:oneadmin /etc/one /var/run/one
+RUN chown -R oneadmin:oneadmin /etc/one
