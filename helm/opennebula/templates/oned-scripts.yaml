@@ -3,7 +3,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: opennebula-scripts
+  name: {{ template "opennebula.fullname" . }}-scripts
 data:
   init.sh: |+
 {{- .Files.Get "scripts/init.sh" | nindent 4 }}

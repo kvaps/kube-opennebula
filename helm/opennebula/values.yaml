@@ -31,8 +31,41 @@ oned:
     connections: 50
     rootPasswd: vahch9saz6ogeaP4ou7P
 
+  service:
+    port: 2633
+
+  collectd:
+    service:
+      port: 32155
+      nodePort: 32155
+
   ingress:
     enabled: true
+    labels: {}
+
+    ## Annotations.
+    ##
+    # annotations: {}
+    annotations:
+      kubernetes.io/ingress.class: nginx
+      kubernetes.io/tls-acme: "true"
+
+
+    ## Hostnames.
+    ## Must be provided if Ingress is enabled.
+    ##
+    # hosts: []
+    hosts:
+      - opennebula.example.org
+
+    ## TLS configuration for Prometheus Ingress
+    ## Secret must be manually created in the namespace
+    ##
+    # tls: []
+    tls:
+      - secretName: opennebula-tls
+        hosts:
+          - opennebula.example.org
 
 externalNode:
   mounts:

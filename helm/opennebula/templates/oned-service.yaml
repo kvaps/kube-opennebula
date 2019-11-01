@@ -1,55 +1,57 @@
 {{- if .Values.oned.enabled }}
+{{- $fullName := include "opennebula.fullname" . -}}
+{{- $servicePort := .Values.oned.service.port -}}
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: opennebula-oned-servers
+  name: {{ $fullName }}-oned-servers
 spec:
   publishNotReadyAddresses: true
   clusterIP: None
   ports:
   - name: http
-    port: 2633
+    port: {{ $servicePort }}
   selector:
-    app: opennebula-oned
+    app: {{ $fullName }}-oned
   type: ClusterIP
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: opennebula-oned
+  name: {{ $fullName }}-oned
 spec:
   ports:
   - name: http
-    port: 2633
+    port: {{ $servicePort }}
   selector:
-    app: opennebula-oned
+    app: {{ $fullName }}-oned
   type: ClusterIP
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: opennebula-oned-leader
+  name: {{ $fullName }}-oned-leader
 spec:
   clusterIP: None
   ports:
   - name: http
-    port: 2633
+    port: {{ $servicePort }}
   selector:
-    app: opennebula-oned
+    app: {{ $fullName }}-oned
   type: ClusterIP
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: opennebula-oned-collectd
+  name: {{ $fullName }}-oned-collectd
 spec:
   ports:
   - name: collectd
-    nodePort: 32155
-    port: 32155
+    port: {{ .Values.oned.collectd.service.port }}
+    nodePort: {{ .Values.oned.collectd.service.nodePort }}
     protocol: UDP
   selector:
-    app: opennebula-oned
+    app: {{ $fullName }}-oned
   type: NodePort
 {{- end }}
