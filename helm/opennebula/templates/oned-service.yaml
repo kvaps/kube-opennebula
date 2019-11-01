@@ -6,6 +6,11 @@ apiVersion: v1
 kind: Service
 metadata:
   name: {{ $fullName }}-oned-servers
+  labels:
+    app: {{ $fullName }}-oned
+{{- if .Values.oned.service.labels }}
+{{ toYaml .Values.oned.service.labels | indent 4 }}
+{{- end }}
 spec:
   publishNotReadyAddresses: true
   clusterIP: None
@@ -20,6 +25,11 @@ apiVersion: v1
 kind: Service
 metadata:
   name: {{ $fullName }}-oned
+  labels:
+    app: {{ $fullName }}-oned
+{{- if .Values.oned.service.labels }}
+{{ toYaml .Values.oned.service.labels | indent 4 }}
+{{- end }}
 spec:
   ports:
   - name: http
@@ -32,6 +42,11 @@ apiVersion: v1
 kind: Service
 metadata:
   name: {{ $fullName }}-oned-leader
+  labels:
+    app: {{ $fullName }}-oned
+{{- if .Values.oned.service.labels }}
+{{ toYaml .Values.oned.service.labels | indent 4 }}
+{{- end }}
 spec:
   clusterIP: None
   ports:
@@ -45,11 +60,16 @@ apiVersion: v1
 kind: Service
 metadata:
   name: {{ $fullName }}-oned-collectd
+  labels:
+    app: {{ $fullName }}-oned
+{{- if .Values.oned.service.labels }}
+{{ toYaml .Values.oned.service.labels | indent 4 }}
+{{- end }}
 spec:
   ports:
   - name: collectd
-    port: {{ .Values.oned.collectd.service.port }}
-    nodePort: {{ .Values.oned.collectd.service.nodePort }}
+    port: {{ .Values.oned.collectd.port }}
+    nodePort: {{ .Values.oned.collectd.nodePort }}
     protocol: UDP
   selector:
     app: {{ $fullName }}-oned

@@ -1,85 +1,100 @@
 {{- if .Values.oned.enabled }}
+{{- $fullName := include "opennebula.fullname" . -}}
 ---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: opennebula-oned
+  name: {{ $fullName }}-oned
+  labels:
+    app: {{ $fullName }}-oned
+{{- if .Values.oned.labels }}
+{{ toYaml .Values.oned.labels | indent 4 }}
+{{- end }}
+
 spec:
-  replicas: 3
+  replicas: {{ .Values.oned.replicas }}
   selector:
     matchLabels:
-      app: opennebula-oned
-  serviceName: opennebula-oned-servers
+      app: {{ $fullName }}-oned
+  serviceName: {{ $fullName }}-oned-servers
   podManagementPolicy: Parallel
   updateStrategy: 
     type: OnDelete
   template:
     metadata:
       labels:
-        app: opennebula-oned
+        app: {{ $fullName }}-oned
     spec:
       containers:
+      {{- if and .Values.oned.db.enabled (eq .Values.oned.db.backend "mysql") }}
       - name: mysql
-        image: docker.io/library/mysql:8.0.18
+        image: {{ .Values.oned.db.image.repository }}:{{ .Values.oned.db.image.tag }}
+        imagePullPolicy: {{ .Values.oned.db.image.pullPolicy }}
         volumeMounts:
-        - mountPath: /etc/localtime
-          name: timezone
+        {{- with .Values.timezone }}
+        - name: timezone
+          mountPath: /etc/localtime
           readOnly: true
+        {{- end }}
         - name: data
           mountPath: /var/lib/mysql
         env:
         - name: MYSQL_USER
-          value: oneadmin
+          value: {{ .Values.oned.db.user }}
         - name: MYSQL_PASSWORD
           valueFrom:
             secretKeyRef:
               key: mysqlPassword
-              name: opennebula-db-keys
+              name: {{ $fullName }}-db-keys
         - name: MYSQL_ROOT_PASSWORD
           valueFrom:
             secretKeyRef:
               key: mysqlRootPassword
-              name: opennebula-db-keys
+              name: {{ $fullName }}-db-keys
         - name: MYSQL_DATABASE
-          value: opennebula
+          value: {{ .Values.oned.db.dbName }}
+      {{- end }}
 
       - name: oned
-        image: kvaps/opennebula:tight-integration
+        image: {{ .Values.oned.image.repository }}:{{ .Values.oned.image.tag }}
+        imagePullPolicy: {{ .Values.oned.image.pullPolicy }}
         command: [ '/scripts/init.sh' ]
         ports:
           - name: http
             containerPort: 2633
           - name: collectd
-            containerPort: 4124
+            containerPort: {{ .Values.oned.collectd.port }}
             protocol: UDP
-        lifecycle:
-          preStop:
-            exec:
-              command: [ "/usr/bin/one", "stop" ]
         env:
+        {{- with .Values.timezone }}
         - name: CREATE_CLUSTER
           value: '1'
+        {{- end }}
         - name: LEADER_SVC_NAME
-          value: opennebula-oned-leader
+          value: {{ $fullName }}-oned-leader
         - name: DB_BACKEND
-          value: mysql
+          value: {{ .Values.oned.db.backend }}
+        {{- if eq .Values.oned.db.backend "mysql" }}
         - name: DB_SERVER
-          value: 127.0.0.1
+          value: {{ .Values.oned.db.server }}
         - name: DB_USER
-          value: oneadmin
+          value: {{ .Values.oned.db.user }}
         - name: DB_PASSWORD
           valueFrom:
             secretKeyRef:
               key: mysqlPassword
-              name: opennebula-db-keys
+              name: {{ $fullName }}-db-keys
         - name: DB_NAME
-          value: opennebula
+          value: {{ .Values.oned.db.dbName }}
+        {{- end }}
         ports:
         - containerPort: 2633
         volumeMounts:
-        - mountPath: /etc/localtime
-          name: timezone
+        {{- with .Values.timezone }}
+        - name: timezone
+          mountPath: /etc/localtime
           readOnly: true
+        {{- end }}
         - name: config
           mountPath: /config
         - name: scripts
@@ -94,6 +109,10 @@ spec:
         - name: shared
           mountPath: /var/log/one
           subPath: log
+        {{- if eq .Values.oned.db.backend "sqlite" }}
+        - name: data
+          mountPath: /data
+        {{- end }}
         readinessProbe:
           exec:
             command:
@@ -101,42 +120,85 @@ spec:
           initialDelaySeconds: 5
           periodSeconds: 5
       terminationGracePeriodSeconds: 30
+      {{- with .Values.oned.image.pullSecrets }}
       imagePullSecrets:
-      - name: regsecret
+{{ toYaml . | indent 6 }}
+      {{- end }}
+      {{- with .Values.oned.nodeSelector }}
       nodeSelector:
-        node-role.kubernetes.io/master: ""
+{{ toYaml . | indent 8 }}
+      {{- end }}
+      {{- with .Values.oned.tolerations }}
+      tolerations:
+{{ toYaml . | indent 6 }}
+      {{- end }}
       securityContext:
         fsGroup: 9869
         runAsUser: 9869
-      tolerations:
-      - effect: NoSchedule
-        key: node-role.kubernetes.io/master
       volumes:
+      {{- with .Values.timezone }}
       - name: timezone
         hostPath:
-          path: /usr/share/zoneinfo/Europe/Prague
+          path: /usr/share/zoneinfo/{{ . }}
           type: File
+      {{- end }}
       - name: config
         configMap:
-          name: opennebula-oned
+          name: {{ $fullName }}-oned
       - name: scripts
         configMap:
-          name: opennebula-scripts
+          name: {{ $fullName }}-scripts
           defaultMode: 0777
       - name: ssh-keys
         secret:
-          secretName: opennebula-ssh-keys
+          secretName: {{ $fullName }}-ssh-keys
           defaultMode: 0400
       - name: one-keys
         secret:
-          secretName: opennebula-one-keys
+          secretName: {{ $fullName }}-one-keys
       - name: data
+        {{- if .Values.persistence.data.enabled }}
+        persistentVolumeClaim:
+          {{- if .Values.persistence.data.existingClaim }}
+          claimName: {{ .Values.persistence.data.existingClaim }}
+          {{- else }}
+          claimName: {{ $fullName }}-data
+          {{- end }}
+        {{- else }}
         emptyDir:
-      #  persistentVolumeClaim:
-      #    claimName: opennebula-data
+        {{- end }}
       - name: shared
+        {{- if .Values.persistence.shared.enabled }}
+        persistentVolumeClaim:
+          {{- if .Values.persistence.shared.existingClaim }}
+          claimName: {{ .Values.persistence.shared.existingClaim }}
+          {{- else }}
+          claimName: {{ $fullName }}-shared
+          {{- end }}
+        {{- else }}
         emptyDir:
-      #  persistentVolumeClaim:
-      #    claimName: opennebula-shared
-      #
+        {{- end }}
+
+  {{- if and .Values.persistence.data.enabled (not .Values.persistence.data.existingClaim) }}
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+      {{- with .Values.persistence.data.annotations  }}
+      annotations:
+{{ toYaml . | indent 10 }}
+      {{- end }}
+      {{- with .Values.persistence.data.finalizers  }}
+      finalizers:
+{{ toYaml . | indent 8 }}
+      {{- end }}
+    spec:
+      accessModes:
+        {{- range .Values.persistence.data.accessModes }}
+        - {{ . | quote }}
+        {{- end }}
+      storageClassName: {{ .Values.persistence.data.storageClassName }}
+      resources:
+        requests:
+          storage: {{ .Values.persistence.data.size | quote }}
+  {{- end -}}
 {{- end }}

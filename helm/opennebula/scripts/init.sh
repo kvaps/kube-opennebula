@@ -406,6 +406,10 @@ main() {
   trap cleanup EXIT
   info "initializing"
   load_db_config
+  if [ "$DB_BACKEND" = "sqlite" ]; then
+    ln -sf /data/one.db /var/lib/one/one.db
+  fi
+
   load_federation_config
   load_version_info
   load_my_id
