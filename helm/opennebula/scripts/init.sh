@@ -14,10 +14,26 @@ info() {
     echo "$1"
 }
 
-stop_oned() {
-  info 'stopping oned'
-  kill "$1" && wait
-  info 'oned stopped';
+cleanup() {
+  exec 3>&2
+  exec 2> /dev/null
+
+  for PID in $(jobs -p | tac); do
+    kill $PID > /dev/null 2>&1
+
+    local counter=0
+    while ps $PID > /dev/null 2>&1; do
+      let counter=counter+1
+      if [ $counter -gt 10 ]; then
+        kill -9 $PID > /dev/null 2>&11
+        break
+      fi
+      sleep 1
+    done
+  done
+
+  exec 2>&3
+  exec 3>&-     
 }
 
 # Parses option between square brackets (eg. DB = [ DB_BACKEND = "mysql" ] )
@@ -225,13 +241,10 @@ perform_bootstrap() {
 
       info "starting oned"
       oned -f 2>/dev/null &
-      ONED_PID="$!"
-      trap "stop_oned $ONED_PID" EXIT
 
       sleep 5
       until onezone list >/dev/null 2>&1; do
         if ! kill -0 "$ONED_PID" >/dev/null 2>&1; then
-          trap '' EXIT
           fatal "oned process is dead"
         fi
         info "oned is not ready. waiting 5 sec"
@@ -253,8 +266,9 @@ perform_bootstrap() {
       fi
       rm -f "$SERVERADMIN_PASSWORD_FILE"
 
-      stop_oned "$ONED_PID"
-      trap '' EXIT
+      info 'stopping oned'
+      cleanup
+      info 'oned stopped'
 
       info "bootstrap procedure finished"
       return 0
@@ -367,7 +381,18 @@ setup_config(){
   fi
 }
 
+# Sets logging to stdout (workaround for https://github.com/OpenNebula/one/issues/3900)
+setup_logging(){
+  touch /tmp/oned.log
+  ln -sf /tmp/oned.log /var/log/one/oned.log
+  tail -F /tmp/oned.log 2>/dev/null &
+  while sleep 3600; do
+    echo -n > /tmp/oned.log
+  done &
+}
+
 main() {
+  trap cleanup EXIT
   info "initializing"
   load_db_config
   load_federation_config
@@ -391,8 +416,10 @@ main() {
 
   setup_config db federation
   setup_keys
+  setup_logging
+
   info "starting opennebula"
-  exec oned -f
+  oned -f
 }
 
 main
