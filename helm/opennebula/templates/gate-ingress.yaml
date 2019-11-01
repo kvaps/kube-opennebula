@@ -1,0 +1,19 @@
+---
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: nginx
+  name: opennebula-gate
+spec:
+  rules:
+  - host: opennebula-gate.example.org
+    http:
+      paths:
+      - backend:
+          serviceName: opennebula-gate
+          servicePort: 9869
+  tls:
+  - hosts:
+    - opennebula-gate.example.org
+    secretName: opennebula-gate-tls

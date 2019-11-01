@@ -1,0 +1,134 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: opennebula-oned
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: opennebula-oned
+  serviceName: opennebula-oned-servers
+  podManagementPolicy: Parallel
+  updateStrategy: 
+    type: OnDelete
+  template:
+    metadata:
+      labels:
+        app: opennebula-oned
+    spec:
+      containers:
+      - name: oned
+        image: kvaps/opennebula:tight-integration
+        command: [ '/scripts/init.sh' ]
+        ports:
+          - name: http
+            containerPort: 2633
+          - name: collectd
+            containerPort: 4124
+            protocol: UDP
+        env:
+        - name: CREATE_CLUSTER
+          value: '1'
+        - name: LEADER_SVC_NAME
+          value: opennebula-oned-leader
+        - name: DB_BACKEND
+          value: mysql
+        - name: DB_SERVER
+          value: 127.0.0.1
+        - name: DB_USER
+          value: oneadmin
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: mysqlPassword
+              name: opennebula-db-keys
+        - name: DB_NAME
+          value: opennebula
+        ports:
+        - containerPort: 2633
+        volumeMounts:
+        - mountPath: /etc/localtime
+          name: timezone
+          readOnly: true
+        - name: config
+          mountPath: /config
+        - name: scripts
+          mountPath: /scripts
+        - name: one-keys
+          mountPath: /secrets
+        - name: ssh-keys
+          mountPath: /var/lib/one/.ssh
+        - name: shared
+          mountPath: /var/tmp
+          subPath: tmp
+        - name: shared
+          mountPath: /var/log/one
+          subPath: log
+        readinessProbe:
+          exec:
+            command:
+            - /scripts/readiness-probe.sh
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      - name: mysql
+        image: docker.io/library/mysql:8.0.18
+        volumeMounts:
+        - mountPath: /etc/localtime
+          name: timezone
+          readOnly: true
+        - name: data
+          mountPath: /var/lib/mysql
+        env:
+        - name: MYSQL_USER
+          value: oneadmin
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: mysqlPassword
+              name: opennebula-db-keys
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: mysqlRootPassword
+              name: opennebula-db-keys
+        - name: MYSQL_DATABASE
+          value: opennebula
+      imagePullSecrets:
+      - name: regsecret
+      nodeSelector:
+        node-role.kubernetes.io/master: ""
+      securityContext:
+        fsGroup: 9869
+        runAsUser: 9869
+      tolerations:
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/master
+      volumes:
+      - name: timezone
+        hostPath:
+          path: /usr/share/zoneinfo/Europe/Prague
+          type: File
+      - name: config
+        configMap:
+          name: opennebula-oned
+      - name: scripts
+        configMap:
+          name: opennebula-scripts
+          defaultMode: 0777
+      - name: ssh-keys
+        secret:
+          secretName: opennebula-ssh-keys
+          defaultMode: 0400
+      - name: one-keys
+        secret:
+          secretName: opennebula-one-keys
+      - name: data
+        emptyDir:
+      #  persistentVolumeClaim:
+      #    claimName: opennebula-data
+      - name: shared
+        emptyDir:
+      #  persistentVolumeClaim:
+      #    claimName: opennebula-shared
+

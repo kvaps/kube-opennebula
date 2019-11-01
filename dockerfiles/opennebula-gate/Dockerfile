@@ -61,6 +61,9 @@ RUN apt-get -y update \
  && dpkg -l opennebula-gate \
  && apt-get -y clean
 
+# Fix permissions
+RUN chown -R oneadmin:oneadmin /etc/one
+
 # Logging to /dev/stdout
 RUN sed -i 's|^\(ONEGATE_LOG *=\).*|\1 "/dev/stdout"|' /usr/lib/one/onegate/onegate-server.rb
 

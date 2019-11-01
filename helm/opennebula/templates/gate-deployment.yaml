@@ -1,0 +1,48 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: opennebula-gate
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: opennebula-gate
+  template:
+    metadata:
+      labels:
+        app: opennebula-gate
+    spec:
+      containers:
+      - name: onegate
+        image: kvaps/opennebula-gate
+        command: [ "/usr/bin/ruby", "/usr/lib/one/onegate/onegate-server.rb" ]
+        ports:
+        - name: http
+          containerPort: 5030
+        volumeMounts:
+        - mountPath: /etc/one/onegate-server.conf
+          name: config
+          subPath: onegate-server.conf
+        - mountPath: /var/lib/one/.one/onegate_auth
+          name: one-keys
+          subPath: onegate_auth
+      imagePullSecrets:
+      - name: regsecret
+      nodeSelector:
+        node-role.kubernetes.io/master: ""
+      securityContext:
+        fsGroup: 9869
+        runAsUser: 9869
+      tolerations:
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/master
+      volumes:
+      - name: config
+        configMap:
+          name: opennebula-gate
+      - name: one-keys
+        secret:
+          secretName: opennebula-one-keys
+      - name: shared
+        emptyDir: {}

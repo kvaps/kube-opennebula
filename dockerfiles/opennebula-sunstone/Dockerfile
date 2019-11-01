@@ -63,6 +63,9 @@ RUN apt-get -y update \
  && rm -f /usr/local/bin/systemd-tmpfiles \
  && apt-get -y clean
 
+# Fix permissions
+RUN chown -R oneadmin:oneadmin /etc/one
+
 # Logging to /dev/stdout, do not daemonize novnc-server
 RUN sed -i 's|^\(SUNSTONE_LOG *=\).*|\1 "/dev/stdout"|' /usr/lib/one/sunstone/sunstone-server.rb \
  && sed -i 's|^\(VNC_LOG *=\).*|\1 "/dev/stdout"|' /usr/bin/novnc-server \

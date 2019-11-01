@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: opennebula-external-node
+data:
+  mounts: |+
+{{- if .Values.externalNode.mounts }}
+{{- .Values.externalNode.mounts | nindent 4 }}
+{{- end }}
+
+  opennebula.sudoers: |+
+{{- .Files.Get "config/opennebula.sudoers" | nindent 4 }}
+
+  script.sh: |+
+{{- .Files.Get "scripts/external-node.sh" | nindent 4 }}

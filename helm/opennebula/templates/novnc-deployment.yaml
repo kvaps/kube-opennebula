@@ -1,0 +1,46 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: opennebula-novnc
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: opennebula-novnc
+  template:
+    metadata:
+      labels:
+        app: opennebula-novnc
+    spec:
+      containers:
+      - name: novnc
+        image: kvaps/opennebula-sunstone:v5.8.5
+        command: [ '/usr/bin/ruby', '/usr/bin/novnc-server', 'start' ]
+        ports:
+        - name: websocket
+          containerPort: 29876
+        volumeMounts:
+        - name: config
+          mountPath: /etc/one/sunstone-server.conf
+          subPath: sunstone-server.conf
+        - name: shared
+          mountPath: /var/lib/one/sunstone_vnc_tokens
+          subPath: sunstone_vnc_tokens
+      imagePullSecrets:
+      - name: regsecret
+      nodeSelector:
+        node-role.kubernetes.io/master: ""
+      securityContext:
+        fsGroup: 9869
+        runAsUser: 9869
+      tolerations:
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/master
+      volumes:
+      - name: config
+        configMap:
+          name: opennebula-novnc
+      - name: shared
+        emptyDir: {}
+

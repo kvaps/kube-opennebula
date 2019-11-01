@@ -1,0 +1,8 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: opennebula-flow
+data:
+  oneflow-server.conf: |+
+{{- .Files.Get "config/oneflow-server.conf" | nindent 4 }}

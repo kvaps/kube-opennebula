@@ -1,0 +1,6 @@
+Host *
+LogLevel ERROR
+StrictHostKeyChecking no
+UserKnownHostsFile /dev/null
+GSSAPIAuthentication no
+User oneadmin

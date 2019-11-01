@@ -61,6 +61,9 @@ RUN apt-get -y update \
  && dpkg -l opennebula-flow \
  && apt-get -y clean
 
+# Fix permissions
+RUN chown -R oneadmin:oneadmin /etc/one
+
 # Logging to /dev/stdout
 RUN sed -i 's|^\(ONEFLOW_LOG *=\).*|\1 "/dev/stdout"|' /usr/lib/one/oneflow/oneflow-server.rb
 

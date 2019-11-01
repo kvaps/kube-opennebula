@@ -65,6 +65,9 @@ RUN apt-get -y update \
  && dpkg -l opennebula \
  && apt-get -y clean
 
+# Fix permissions
+RUN chown -R oneadmin:oneadmin /etc/one
+
 # Logging to /dev/stdout
 RUN sed -i 's/\(SYSTEM *= *\)"file"/\1"std"/' /etc/one/oned.conf \
  && sed -i 's/\(system *= *\)"file"/\1"std"/' /etc/one/sched.conf

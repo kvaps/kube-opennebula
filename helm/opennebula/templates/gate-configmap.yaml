@@ -1,0 +1,8 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: opennebula-gate
+data:
+  onegate-server.conf: |+
+{{- .Files.Get "config/onegate-server.conf" | nindent 4 }}

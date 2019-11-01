@@ -1,0 +1,12 @@
+name: kube-linstor
+description: Linstor Controller and Satellites for Kubernetes
+version: v0.0.1
+keywords:
+  - opennebula
+  - virtualization
+home: https://github.com/kvaps/kube-opennebula
+sources:
+  - https://hub.docker.com/r/kvaps/kube-opennebula
+maintainers:
+  - name: kvaps
+    email: kvapss@gmail.com

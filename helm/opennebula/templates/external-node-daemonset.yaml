@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: opennebula-external-node
+spec:
+  selector:
+    matchLabels:
+      app: opennebula-external-node
+  template:
+    metadata:
+      labels:
+        app: opennebula-external-node
+    spec:
+      containers:
+      - image: ubuntu:18.04
+        name: opennebula-node
+        command: [ '/bin/bash', '/config/script.sh' ]
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - mountPath: /config
+          name: config
+        - mountPath: /var/lib/one/.ssh
+          name: ssh-keys
+      hostIPC: true
+      hostNetwork: true
+      hostPID: true
+      imagePullSecrets:
+      - name: regsecret
+      nodeSelector:
+        node-role.kubernetes.io/master: ""
+      tolerations:
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/master
+      volumes:
+      - configMap:
+          name: opennebula-external-node
+        name: config
+      - name: ssh-keys
+        secret:
+          secretName: opennebula-ssh-keys

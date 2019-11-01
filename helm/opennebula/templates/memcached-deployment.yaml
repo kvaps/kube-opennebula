@@ -1,0 +1,32 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: opennebula-memcached
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: opennebula-memcached
+  template:
+    metadata:
+      labels:
+        app: opennebula-memcached
+    spec:
+      containers:
+      - name: memcached
+        image: memcached:1.5.6-alpine
+        ports:
+        - name: memcached
+          containerPort: 11211
+      imagePullSecrets:
+      - name: regsecret
+      nodeSelector:
+        node-role.kubernetes.io/master: ""
+      securityContext:
+        fsGroup: 9869
+        runAsUser: 9869
+      tolerations:
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/master
+

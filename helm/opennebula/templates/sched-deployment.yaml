@@ -1,0 +1,48 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: opennebula-sched
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: opennebula-sched
+  template:
+    metadata:
+      labels:
+        app: opennebula-sched
+    spec:
+      containers:
+      - name: sched
+        image: kvaps/opennebula:tight-integration
+        command: [ '/usr/bin/mm_sched' ]
+        volumeMounts:
+        - name: config
+          mountPath: /etc/one/sched.conf
+          subPath: sched.conf
+        - name: one-keys
+          mountPath: /var/lib/one/.one/one_auth
+          subPath: one_auth
+        - name: shared
+          mountPath: /var/log/one
+          subPath: log
+      imagePullSecrets:
+      - name: regsecret
+      nodeSelector:
+        node-role.kubernetes.io/master: ""
+      securityContext:
+        fsGroup: 9869
+        runAsUser: 9869
+      tolerations:
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/master
+      volumes:
+      - name: config
+        configMap:
+          name: opennebula-sched
+      - name: one-keys
+        secret:
+          secretName: opennebula-one-keys
+      - name: shared
+        emptyDir: {}

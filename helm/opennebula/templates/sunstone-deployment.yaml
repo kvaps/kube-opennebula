@@ -1,0 +1,67 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: opennebula-sunstone
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: opennebula-sunstone
+  template:
+    metadata:
+      labels:
+        app: opennebula-sunstone
+    spec:
+      containers:
+      - name: sunstone
+        image: kvaps/opennebula-sunstone:v5.8.5
+        command: [ "/usr/bin/ruby", "/usr/lib/one/sunstone/sunstone-server.rb" ]
+        lifecycle:
+          postStart:
+            exec:
+              command: [ '/bin/sh', '-c', 'echo 1 > /var/lock/one/.novnc.lock' ]
+        ports:
+        - name: http
+          containerPort: 9869
+        volumeMounts:
+        - name: config
+          mountPath: /etc/one/sunstone-server.conf
+          subPath: sunstone-server.conf
+        - name: one-keys
+          mountPath: /var/lib/one/.one/sunstone_auth
+          subPath: sunstone_auth
+        - name: shared
+          mountPath: /var/tmp
+          subPath: tmp
+        - name: shared
+          mountPath: /var/log/one
+          subPath: log
+        - name: shared
+          mountPath: /var/lib/one/sunstone_vnc_tokens
+          subPath: sunstone_vnc_tokens
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 9869
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      imagePullSecrets:
+      - name: regsecret
+      nodeSelector:
+        node-role.kubernetes.io/master: ""
+      securityContext:
+        fsGroup: 9869
+        runAsUser: 9869
+      tolerations:
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/master
+      volumes:
+      - configMap:
+          name: opennebula-sunstone
+        name: config
+      - name: one-keys
+        secret:
+          secretName: opennebula-one-keys
+      - name: shared
+        emptyDir: {}
