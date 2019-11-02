@@ -1,6 +1,6 @@
 name: opennebula
 description: Linstor Controller and Satellites for Kubernetes
-version: v0.1.0
+version: v0.2.0
 keywords:
   - opennebula
   - virtualization
