@@ -1,84 +1,42 @@
-# kube-opennebula
+# Kube-OpenNebula
+
+![](https://opennebula.org/wp-content/uploads/2019/04/img-logo-blue.svg)
+
+Helm chart and OpenNebula images ready to deploy on Kubernetes
 
 ## Quick start
 
-#### Deploy Control plane
+### Control plane
 
-Create namespace
+* Create namespace:
+  
+  ```bash
+  kubectl create namespace opennebula
+  ```
+  
+* Deploy OpenNebula:
+  
+  ```bash
+  cd helm/opennebula
+  vim values.yaml
+  helm template . | kubectl apply -n opennebula -f -
+  ```
 
-```bash
-kubectl create namespace opennebula
-```
+### Compute nodes
 
-Generate keys
+* To deploy external compute node your hosts should have `libvirtd` and `qemu-kvm` installed and configured sudoers, just place [opennebula.sudoers](https://github.com/OpenNebula/one/search?q=filename%3Aopennebula.sudoers) for your system into `/etc/sudoers.d/opennebula`.<br>
+  Otherwise you can just install `opennebula-node` meta-package.
 
-```bash
-mkdir opennebula-ssh-keys
-ssh-keygen -f opennebula-ssh-keys/id_rsa -C oneadmin -P ''
-cat opennebula-ssh-keys/id_rsa.pub > opennebula-ssh-keys/authorized_keys
+* Get OpenNebula's ssh-key, and place it to `/var/lib/one/.ssh/authorized_keys` on every node to allow OpenNebula login via ssh.
+  ```
+  exec opennebula-oned-0 -c oned -- ssh-keygen -y -f /var/lib/one/.ssh/id_rsa
+  ```
 
-cat > opennebula-ssh-keys/config <<EOT
-Host *
-    LogLevel ERROR
-    StrictHostKeyChecking no
-    UserKnownHostsFile /dev/null
-    GSSAPIAuthentication no
-    User oneadmin
-EOT
+* Create new host via OpenNebula Interface.
 
-kubectl create secret generic -n opennebula opennebula-ssh-keys --from-file=opennebula-ssh-keys
-```
 
-Generate oneadmin key
-
-```bash
-mkdir opennebula-one-keys
-echo oneadmin:BHMOmCj85umdeqT4Fr0JnkDEmU7zbk > opennebula-one-keys/one_auth
-kubectl create secret generic -n opennebula opennebula-one-keys --from-file=opennebula-one-keys
-```
-
-Create main opennebula daemon and take other keys
-
-```bash
-kubectl create -n opennebula -f examples/control-plane/oned-config.yaml
-kubectl create -n opennebula -f examples/control-plane/oned.yaml
-
-kubectl exec -n opennebula opennebula-oned-0 -- tar -C /var/lib/one/.one/ -cvf - . | tar -C ./opennebula-one-keys -xf -
-kubectl delete secret -n opennebula opennebula-one-keys
-kubectl create secret generic -n opennebula opennebula-one-keys --from-file=opennebula-one-keys
-```
-
-Now you can create the reset services
-
-```bash
-kubectl create -n opennebula -f examples/control-plane/oned.yaml
-```
-
-#### Deploy compute nodes
-
-Your hosts should have `libvirtd` and `qemu-kvm` installed and configured sudoersi, just place [opennebula.sudoers](https://github.com/OpenNebula/one/search?q=filename%3Aopennebula.sudoers) for your system into `/etc/sudoers.d/opennebula`, you can do that later in your custom script.
-
-Otherwise you can just install `opennebula-node` meta-package.
-
-Now you need to prepare special Daemonset which will configure your nodes.
-
-* Download [opennebula-node.yaml](examples/opennebula-node.yaml) and modify `script.sh` for your needs, you can attach storage devices, configure host network there and etc.
-* Deploy daemonset:
-
-```
-kubectl create -n opennebula -f examples/opennebula-node.yaml
-```
-
-Now you can label your compute nodes as opennebula-nodes:
-
-```
-kubectl label node <node> opennebula-node=
-```
-
-#### Check is everything is fine
-
-You should have ssh-access from oned pod to every node. You can check that by executing the following command:
-
-```
-kubectl exec -ti -n opennebula opennebula-oned-0 ssh <node>
-```
+* Check is everything is fine<br>
+  You should be able login via ssh from oned pod to every node. You can check that by executing the following command:
+  ```
+  kubectl exec -ti opennebula-oned-0 ssh <node>
+  ```
