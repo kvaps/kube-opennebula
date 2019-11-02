@@ -71,11 +71,11 @@ spec:
         imagePullPolicy: {{ .Values.oned.image.pullPolicy }}
         command: [ '/scripts/init.sh' ]
         ports:
-          - name: http
-            containerPort: 2633
-          - name: collectd
-            containerPort: {{ .Values.oned.collectd.port }}
-            protocol: UDP
+        - name: http
+          containerPort: {{ .Values.oned.port }}
+        - name: collectd
+          containerPort: {{ .Values.oned.collectd.port }}
+          protocol: UDP
         env:
         {{- if .Values.oned.createCluster }}
         - name: CREATE_CLUSTER
@@ -98,8 +98,6 @@ spec:
         - name: DB_NAME
           value: {{ .Values.oned.db.dbName }}
         {{- end }}
-        ports:
-        - containerPort: 2633
         volumeMounts:
         {{- with .Values.timezone }}
         - name: timezone

@@ -39,7 +39,7 @@ spec:
         command: [ "/usr/bin/ruby", "/usr/lib/one/oneflow/oneflow-server.rb" ]
         ports:
         - name: http
-          containerPort: 2474
+          containerPort: {{ .Values.flow.port }}
         volumeMounts:
         {{- with .Values.timezone }}
         - name: timezone

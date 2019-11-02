@@ -39,7 +39,7 @@ spec:
         command: [ '/usr/bin/ruby', '/usr/bin/novnc-server', 'start' ]
         ports:
         - name: websocket
-          containerPort: 29876
+          containerPort: {{ .Values.novnc.port }}
         volumeMounts:
         {{- with .Values.timezone }}
         - name: timezone

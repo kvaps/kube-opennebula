@@ -36,10 +36,11 @@ spec:
       containers:
       - name: memcached
         image: {{ .Values.memcached.image.repository }}:{{ .Values.memcached.image.tag }}
+        args: [ '-p', '{{ .Values.memcached.port }}' ]
         imagePullPolicy: {{ .Values.memcached.image.pullPolicy }}
         ports:
         - name: memcached
-          containerPort: 11211
+          containerPort: {{ .Values.memcached.port }}
         {{- with .Values.timezone }}
         volumeMounts:
         - name: timezone

@@ -43,7 +43,7 @@ spec:
               command: [ '/bin/sh', '-c', 'echo 1 > /var/lock/one/.novnc.lock' ]
         ports:
         - name: http
-          containerPort: 9869
+          containerPort: {{ .Values.sunstone.port }}
         volumeMounts:
         {{- with .Values.timezone }}
         - name: timezone

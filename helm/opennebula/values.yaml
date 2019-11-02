@@ -39,7 +39,7 @@ oned:
     tag: tight-integration
     pullPolicy: IfNotPresent
     pullSecrets:
-      - name: regsecret
+    - name: regsecret
 
   nodeSelector:
     node-role.kubernetes.io/master: ""
@@ -53,6 +53,12 @@ oned:
   serveradminPasswd: vae7thailahh7kiexa2phaipooChah
   oneKey: chaizao3hie1chaiDathaej1puuFoo
   #sshKey:
+
+  port: 2633
+  service:
+    labels: {}
+    annotations: {}
+    port: 2633
 
   # Database config
   db:
@@ -74,11 +80,6 @@ oned:
   collectd:
     port: 32155
     nodePort: 32155
-
-  service:
-    labels: {}
-    annotations: {}
-    port: 2633
 
   ingress:
     enabled: true
@@ -131,6 +132,7 @@ sunstone:
     pullSecrets:
       - name: regsecret
 
+  port: 9869
   service:
     labels: {}
     annotations: {}
@@ -165,6 +167,7 @@ novnc:
     pullSecrets:
       - name: regsecret
 
+  port: 29876
   service:
     labels: {}
     annotations: {}
@@ -207,6 +210,7 @@ memcached:
     operator: Exists
     effect: NoSchedule
 
+  port: 11211
   service:
     labels: {}
     annotations: {}
@@ -235,6 +239,7 @@ gate:
     operator: Exists
     effect: NoSchedule
 
+  port: 5030
   service:
     labels: {}
     annotations: {}
@@ -276,6 +281,7 @@ flow:
       operator: Exists
       effect: NoSchedule
 
+  port: 2474
   service:
     labels: {}
     annotations: {}
