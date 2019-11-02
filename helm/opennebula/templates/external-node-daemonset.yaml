@@ -4,6 +4,16 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: {{ $fullName }}-external-node
+  labels:
+    app: {{ $fullName }}-external-node
+    {{- if .Values.externalNode.labels }}
+    {{- toYaml .Values.externalNode.labels | nindent 4 }}
+    {{- end }}
+  {{- with .Values.externalNode.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
 spec:
   selector:
     matchLabels:
@@ -12,6 +22,13 @@ spec:
     metadata:
       labels:
         app: {{ $fullName }}-external-node
+        {{- with .Values.externalNode.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.externalNode.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
     spec:
       containers:
         image: {{ .Values.externalNode.image.repository }}:{{ .Values.externalNode.image.tag }}

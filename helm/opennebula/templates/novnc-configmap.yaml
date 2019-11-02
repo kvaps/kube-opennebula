@@ -1,9 +1,12 @@
 {{- if .Values.novnc.enabled }}
+{{- $fullName := include "opennebula.fullname" . -}}
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ template "opennebula.fullname" . }}-novnc
+  name: {{ $fullName }}-novnc
+  labels:
+    app: {{ $fullName }}-novnc
 data:
   sunstone-server.conf: |+
     {{- tpl (regexReplaceAll ":vnc_proxy_support_wss: .*" (.Files.Get "config/sunstone-server.conf") ":vnc_proxy_support_wss: no") . | nindent 4 }}

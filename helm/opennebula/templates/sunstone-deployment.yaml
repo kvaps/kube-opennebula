@@ -5,6 +5,16 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ $fullName }}-sunstone
+  labels:
+    app: {{ $fullName }}-sunstone
+    {{- if .Values.sunstone.labels }}
+    {{- toYaml .Values.sunstone.labels | nindent 4 }}
+    {{- end }}
+  {{- with .Values.sunstone.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
 spec:
   replicas: {{ .Values.sunstone.replicas }}
   selector:
@@ -14,6 +24,13 @@ spec:
     metadata:
       labels:
         app: {{ $fullName }}-sunstone
+        {{- with .Values.sunstone.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.sunstone.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
     spec:
       containers:
       - name: sunstone

@@ -7,9 +7,13 @@ metadata:
   name: {{ $fullName }}-oned
   labels:
     app: {{ $fullName }}-oned
-{{- if .Values.oned.labels }}
-{{ toYaml .Values.oned.labels | indent 4 }}
-{{- end }}
+    {{- if .Values.oned.labels }}
+    {{- toYaml .Values.oned.labels | nindent 4 }}
+    {{- end }}
+  {{- with .Values.oned.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 
 spec:
   replicas: {{ .Values.oned.replicas }}
@@ -24,6 +28,13 @@ spec:
     metadata:
       labels:
         app: {{ $fullName }}-oned
+        {{- with .Values.oned.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.oned.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
     spec:
       containers:
       {{- if and .Values.oned.db.enabled (eq .Values.oned.db.backend "mysql") }}
@@ -183,13 +194,18 @@ spec:
   volumeClaimTemplates:
   - metadata:
       name: data
+      labels:
+        app: {{ $fullName }}-data
+        {{- if .Values.persistence.data.labels }}
+        {{- toYaml .Values.persistence.data.labels | nindent 4 }}
+        {{- end }}
       {{- with .Values.persistence.data.annotations  }}
       annotations:
-{{ toYaml . | indent 10 }}
+        {{- toYaml . | nindent 8 }}
       {{- end }}
       {{- with .Values.persistence.data.finalizers  }}
       finalizers:
-{{ toYaml . | indent 8 }}
+        {{- toYaml . | nindent 8 }}
       {{- end }}
     spec:
       accessModes:

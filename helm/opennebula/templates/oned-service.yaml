@@ -11,6 +11,10 @@ metadata:
     {{- if .Values.oned.service.labels }}
     {{- toYaml .Values.oned.service.labels | nindent 4 }}
     {{- end }}
+  {{- with .Values.oned.service.annotations }}
+  annotations:
+    {{ toYaml . | indent 4 }}
+  {{- end }}
 spec:
   publishNotReadyAddresses: true
   clusterIP: None
@@ -27,9 +31,13 @@ metadata:
   name: {{ $fullName }}-oned
   labels:
     app: {{ $fullName }}-oned
-{{- if .Values.oned.service.labels }}
-{{ toYaml .Values.oned.service.labels | indent 4 }}
-{{- end }}
+    {{- if .Values.oned.service.labels }}
+    {{- toYaml .Values.oned.service.labels | nindent 4 }}
+    {{- end }}
+  {{- with .Values.oned.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   ports:
   - name: http
@@ -44,9 +52,13 @@ metadata:
   name: {{ $fullName }}-oned-leader
   labels:
     app: {{ $fullName }}-oned
-{{- if .Values.oned.service.labels }}
-{{ toYaml .Values.oned.service.labels | indent 4 }}
-{{- end }}
+    {{- if .Values.oned.service.labels }}
+    {{- toYaml .Values.oned.service.labels | nindent 4 }}
+    {{- end }}
+  {{- with .Values.oned.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   clusterIP: None
   ports:
@@ -62,9 +74,13 @@ metadata:
   name: {{ $fullName }}-oned-collectd
   labels:
     app: {{ $fullName }}-oned
-{{- if .Values.oned.service.labels }}
-{{ toYaml .Values.oned.service.labels | indent 4 }}
-{{- end }}
+    {{- if .Values.oned.service.labels }}
+    {{- toYaml .Values.oned.service.labels | nindent 4 }}
+    {{- end }}
+  {{- with .Values.oned.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   ports:
   - name: collectd

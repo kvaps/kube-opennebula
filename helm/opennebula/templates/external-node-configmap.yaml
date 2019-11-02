@@ -1,8 +1,11 @@
 {{- if .Values.externalNode.enabled }}
+{{- $fullName := include "opennebula.fullname" . -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ template "opennebula.fullname" . }}-external-node
+  name: {{ $fullName }}-external-node
+  labels:
+    app: {{ $fullName }}-external-node
 data:
   mounts: |+
     {{- if .Values.externalNode.mounts }}

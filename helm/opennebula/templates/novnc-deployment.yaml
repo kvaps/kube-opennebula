@@ -5,8 +5,18 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ $fullName }}-novnc
+  labels:
+    app: {{ $fullName }}-novnc
+    {{- if .Values.novnc.labels }}
+    {{- toYaml .Values.novnc.labels | nindent 4 }}
+    {{- end }}
+  {{- with .Values.novnc.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
 spec:
-  replicas: 1
+  replicas: {{ .Values.novnc.replicas }}
   selector:
     matchLabels:
       app: {{ $fullName }}-novnc
@@ -14,6 +24,13 @@ spec:
     metadata:
       labels:
         app: {{ $fullName }}-novnc
+        {{- with .Values.novnc.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.novnc.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
     spec:
       containers:
       - name: novnc

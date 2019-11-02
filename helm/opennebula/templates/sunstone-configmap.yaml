@@ -1,9 +1,12 @@
 {{- if .Values.sunstone.enabled }}
+{{- $fullName := include "opennebula.fullname" . -}}
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ template "opennebula.fullname" . }}-sunstone
+  name: {{ $fullName }}-sunstone
+  labels:
+    app: {{ $fullName }}-sunstone
 data:
   sunstone-server.conf: |+
     {{- tpl (.Files.Get "config/sunstone-server.conf") . | nindent 4 }}

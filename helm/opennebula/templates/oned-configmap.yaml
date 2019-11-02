@@ -1,9 +1,12 @@
 {{- if .Values.oned.enabled }}
+{{- $fullName := include "opennebula.fullname" . -}}
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ template "opennebula.fullname" . }}-oned
+  name: {{ $fullName }}-oned
+  labels:
+    app: {{ $fullName }}-oned
 data:
   oned.conf: |+
     {{- tpl (.Files.Get "config/oned.conf") . | nindent 4 }}

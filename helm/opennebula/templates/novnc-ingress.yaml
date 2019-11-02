@@ -8,13 +8,13 @@ metadata:
   name: {{ $fullName }}-novnc
   labels:
     app: {{ $fullName }}-novnc
-{{- if .Values.novnc.ingress.labels }}
-{{ toYaml .Values.novnc.ingress.labels | indent 4 }}
-{{- end }}
-{{- with .Values.novnc.ingress.annotations }}
+    {{- if .Values.novnc.ingress.labels }}
+    {{- toYaml .Values.novnc.ingress.labels | nindent 4 }}
+    {{- end }}
+  {{- with .Values.novnc.ingress.annotations }}
   annotations:
-{{ toYaml . | indent 4 }}
-{{- end }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   rules:
   {{- range .Values.novnc.ingress.hosts }}
@@ -26,8 +26,8 @@ spec:
           serviceName: {{ $fullName }}-novnc
           servicePort:  {{ $servicePort }}
   {{- end }}
-{{- if .Values.novnc.ingress.tls }}
+  {{- if .Values.novnc.ingress.tls }}
   tls:
-{{ toYaml .Values.novnc.ingress.tls | indent 4 }}
-{{- end }}
+    {{- toYaml .Values.novnc.ingress.tls | nindent 4 }}
+  {{- end }}
 {{- end }}

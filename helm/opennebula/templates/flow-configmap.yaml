@@ -1,9 +1,12 @@
 {{- if .Values.flow.enabled }}
+{{- $fullName := include "opennebula.fullname" . -}}
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ template "opennebula.fullname" . }}-flow
+  name: {{ $fullName }}-flow
+  labels:
+    app: {{ $fullName }}-flow
 data:
   oneflow-server.conf: |+
     {{- tpl (.Files.Get "config/oneflow-server.conf") . | nindent 4 }}

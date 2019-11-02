@@ -10,10 +10,14 @@ metadata:
     {{- if .Values.memcached.service.labels }}
     {{- toYaml .Values.memcached.service.labels | nindent 4 }}
     {{- end }}
+  {{- with .Values.memcached.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   ports:
   - name: memcached
-    port: 11211
+    port: {{ .Values.memcached.service.port }}
   selector:
     app: {{ $fullName }}-memcached
   type: ClusterIP

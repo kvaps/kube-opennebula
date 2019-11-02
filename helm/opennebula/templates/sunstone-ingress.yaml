@@ -8,13 +8,13 @@ metadata:
   name: {{ $fullName }}-sunstone
   labels:
     app: {{ $fullName }}-sunstone
-{{- if .Values.sunstone.ingress.labels }}
-{{ toYaml .Values.sunstone.ingress.labels | indent 4 }}
-{{- end }}
-{{- with .Values.sunstone.ingress.annotations }}
+    {{- if .Values.sunstone.ingress.labels }}
+    {{- toYaml .Values.sunstone.ingress.labels | nindent 4 }}
+    {{- end }}
+  {{- with .Values.sunstone.ingress.annotations }}
   annotations:
-{{ toYaml . | indent 4 }}
-{{- end }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   rules:
   {{- range .Values.sunstone.ingress.hosts }}
@@ -26,8 +26,8 @@ spec:
           serviceName: {{ $fullName }}-sunstone
           servicePort:  {{ $servicePort }}
   {{- end }}
-{{- if .Values.sunstone.ingress.tls }}
+  {{- if .Values.sunstone.ingress.tls }}
   tls:
-{{ toYaml .Values.sunstone.ingress.tls | indent 4 }}
-{{- end }}
+    {{- toYaml .Values.sunstone.ingress.tls | nindent 4 }}
+  {{- end }}
 {{- end }}

@@ -8,13 +8,13 @@ metadata:
   name: {{ $fullName }}-oned
   labels:
     app: {{ $fullName }}-oned
-{{- if .Values.oned.ingress.labels }}
-{{ toYaml .Values.oned.ingress.labels | indent 4 }}
-{{- end }}
-{{- with .Values.oned.ingress.annotations }}
+    {{- if .Values.oned.ingress.labels }}
+    {{- toYaml .Values.oned.ingress.labels | nindent 4 }}
+    {{- end }}
+  {{- with .Values.oned.ingress.annotations }}
   annotations:
-{{ toYaml . | indent 4 }}
-{{- end }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   rules:
   {{- range .Values.oned.ingress.hosts }}
@@ -26,8 +26,8 @@ spec:
           serviceName: {{ $fullName }}-oned
           servicePort:  {{ $servicePort }}
   {{- end }}
-{{- if .Values.oned.ingress.tls }}
+  {{- if .Values.oned.ingress.tls }}
   tls:
-{{ toYaml .Values.oned.ingress.tls | indent 4 }}
-{{- end }}
+    {{- toYaml .Values.oned.ingress.tls | nindent 4 }}
+  {{- end }}
 {{- end }}

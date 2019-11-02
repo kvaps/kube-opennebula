@@ -8,13 +8,13 @@ metadata:
   name: {{ $fullName }}-gate
   labels:
     app: {{ $fullName }}-gate
-{{- if .Values.gate.ingress.labels }}
-{{ toYaml .Values.gate.ingress.labels | indent 4 }}
-{{- end }}
-{{- with .Values.gate.ingress.annotations }}
+    {{- if .Values.gate.ingress.labels }}
+    {{- toYaml .Values.gate.ingress.labels | nindent 4 }}
+    {{- end }}
+  {{- with .Values.gate.ingress.annotations }}
   annotations:
-{{ toYaml . | indent 4 }}
-{{- end }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   rules:
   {{- range .Values.gate.ingress.hosts }}
@@ -26,8 +26,8 @@ spec:
           serviceName: {{ $fullName }}-gate
           servicePort:  {{ $servicePort }}
   {{- end }}
-{{- if .Values.gate.ingress.tls }}
+  {{- if .Values.gate.ingress.tls }}
   tls:
-{{ toYaml .Values.gate.ingress.tls | indent 4 }}
-{{- end }}
+    {{- toYaml .Values.gate.ingress.tls | nindent 4 }}
+  {{- end }}
 {{- end }}

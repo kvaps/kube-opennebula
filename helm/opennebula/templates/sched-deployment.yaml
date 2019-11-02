@@ -5,6 +5,16 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ $fullName }}-sched
+  labels:
+    app: {{ $fullName }}-sched
+    {{- if .Values.sched.labels }}
+    {{- toYaml .Values.sched.labels | nindent 4 }}
+    {{- end }}
+  {{- with .Values.sched.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
 spec:
   replicas: {{ .Values.sched.replicas }}
   selector:
@@ -14,6 +24,13 @@ spec:
     metadata:
       labels:
         app: {{ $fullName }}-sched
+        {{- with .Values.sched.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.sched.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
     spec:
       containers:
       - name: sched

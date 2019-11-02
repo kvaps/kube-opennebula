@@ -5,6 +5,16 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ $fullName }}-flow
+  labels:
+    app: {{ $fullName }}-flow
+    {{- if .Values.flow.labels }}
+    {{- toYaml .Values.flow.labels | nindent 4 }}
+    {{- end }}
+  {{- with .Values.flow.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
 spec:
   replicas: {{ .Values.gate.replicas }}
   selector:
@@ -14,6 +24,13 @@ spec:
     metadata:
       labels:
         app: {{ $fullName }}-flow
+        {{- with .Values.flow.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.flow.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
     spec:
       containers:
       - name: oneflow

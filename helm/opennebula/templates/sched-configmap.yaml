@@ -1,9 +1,12 @@
 {{- if .Values.sched.enabled }}
+{{- $fullName := include "opennebula.fullname" . -}}
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ template "opennebula.fullname" . }}-sched
+  name: {{ $fullName }}-sched
+  labels:
+    app: {{ $fullName }}-sched
 data:
   sched.conf: |+
     {{- tpl (.Files.Get "config/sched.conf") . | nindent 4 }}

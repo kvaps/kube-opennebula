@@ -10,6 +10,10 @@ metadata:
     {{- if .Values.sunstone.service.labels }}
     {{- toYaml .Values.sunstone.service.labels | nindent 4 }}
     {{- end }}
+  {{- with .Values.sunstone.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   ports:
   - name: http

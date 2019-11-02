@@ -5,6 +5,16 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ $fullName }}-memcached
+  labels:
+    app: {{ $fullName }}-memcached
+    {{- if .Values.memcached.labels }}
+    {{- toYaml .Values.memcached.labels | nindent 4 }}
+    {{- end }}
+  {{- with .Values.memcached.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
 spec:
   replicas: {{ .Values.memcached.replicas }}
   selector:
@@ -14,6 +24,14 @@ spec:
     metadata:
       labels:
         app: {{ $fullName }}-memcached
+        {{- with .Values.memcached.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.memcached.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
     spec:
       containers:
       - name: memcached

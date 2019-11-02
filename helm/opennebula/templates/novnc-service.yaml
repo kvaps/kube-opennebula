@@ -10,6 +10,10 @@ metadata:
     {{- if .Values.novnc.service.labels }}
     {{- toYaml .Values.novnc.service.labels | nindent 4 }}
     {{- end }}
+  {{- with .Values.novnc.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   ports:
   - name: websocket

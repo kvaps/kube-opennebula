@@ -10,6 +10,10 @@ metadata:
     {{- if .Values.gate.service.labels }}
     {{- toYaml .Values.gate.service.labels | nindent 4 }}
     {{- end }}
+  {{- with .Values.gate.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   ports:
   - name: http

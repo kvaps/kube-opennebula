@@ -1,9 +1,12 @@
 {{- if .Values.gate.enabled }}
+{{- $fullName := include "opennebula.fullname" . -}}
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ template "opennebula.fullname" . }}-gate
+  name: {{ $fullName }}-gate
+  labels:
+    app: {{ $fullName }}-gate
 data:
   onegate-server.conf: |+
     {{- tpl (.Files.Get "config/onegate-server.conf") . | nindent 4 }}
