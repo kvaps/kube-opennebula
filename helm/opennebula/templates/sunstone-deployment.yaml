@@ -28,6 +28,11 @@ spec:
         - name: http
           containerPort: 9869
         volumeMounts:
+        {{- with .Values.timezone }}
+        - name: timezone
+          mountPath: /etc/localtime
+          readOnly: true
+        {{- end }}
         - name: config
           mountPath: /etc/one/sunstone-server.conf
           subPath: sunstone-server.conf
@@ -65,6 +70,12 @@ spec:
         fsGroup: 9869
         runAsUser: 9869
       volumes:
+      {{- with .Values.timezone }}
+      - name: timezone
+        hostPath:
+          path: /usr/share/zoneinfo/{{ . }}
+          type: File
+      {{- end }}
       - configMap:
           name: {{ $fullName }}-sunstone
         name: config

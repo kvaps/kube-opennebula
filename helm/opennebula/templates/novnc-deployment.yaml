@@ -24,6 +24,11 @@ spec:
         - name: websocket
           containerPort: 29876
         volumeMounts:
+        {{- with .Values.timezone }}
+        - name: timezone
+          mountPath: /etc/localtime
+          readOnly: true
+        {{- end }}
         - name: config
           mountPath: /etc/one/sunstone-server.conf
           subPath: sunstone-server.conf
@@ -46,6 +51,12 @@ spec:
         fsGroup: 9869
         runAsUser: 9869
       volumes:
+      {{- with .Values.timezone }}
+      - name: timezone
+        hostPath:
+          path: /usr/share/zoneinfo/{{ . }}
+          type: File
+      {{- end }}
       - name: config
         configMap:
           name: {{ $fullName }}-novnc

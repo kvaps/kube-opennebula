@@ -22,6 +22,12 @@ spec:
         ports:
         - name: memcached
           containerPort: 11211
+        {{- with .Values.timezone }}
+        volumeMounts:
+        - name: timezone
+          mountPath: /etc/localtime
+          readOnly: true
+        {{- end }}
       {{- with .Values.memcached.image.pullSecrets }}
       imagePullSecrets:
       {{- toYaml . | nindent 6 }}
@@ -37,4 +43,11 @@ spec:
       securityContext:
         fsGroup: 9869
         runAsUser: 9869
+      {{- with .Values.timezone }}
+      volumes:
+      - name: timezone
+        hostPath:
+          path: /usr/share/zoneinfo/{{ . }}
+          type: File
+      {{- end }}
 {{- end }}

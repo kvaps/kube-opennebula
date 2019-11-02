@@ -24,6 +24,11 @@ spec:
         - name: http
           containerPort: 2474
         volumeMounts:
+        {{- with .Values.timezone }}
+        - name: timezone
+          mountPath: /etc/localtime
+          readOnly: true
+        {{- end }}
         - mountPath: /etc/one/oneflow-server.conf
           name: config
           subPath: oneflow-server.conf
@@ -46,6 +51,12 @@ spec:
         fsGroup: 9869
         runAsUser: 9869
       volumes:
+      {{- with .Values.timezone }}
+      - name: timezone
+        hostPath:
+          path: /usr/share/zoneinfo/{{ . }}
+          type: File
+      {{- end }}
       - name: config
         configMap:
           name: {{ $fullName }}-flow

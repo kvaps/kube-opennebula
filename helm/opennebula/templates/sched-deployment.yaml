@@ -21,6 +21,11 @@ spec:
         imagePullPolicy: {{ .Values.sched.image.pullPolicy }}
         command: [ '/usr/bin/mm_sched' ]
         volumeMounts:
+        {{- with .Values.timezone }}
+        - name: timezone
+          mountPath: /etc/localtime
+          readOnly: true
+        {{- end }}
         - name: config
           mountPath: /etc/one/sched.conf
           subPath: sched.conf
@@ -43,6 +48,12 @@ spec:
         fsGroup: 9869
         runAsUser: 9869
       volumes:
+      {{- with .Values.timezone }}
+      - name: timezone
+        hostPath:
+          path: /usr/share/zoneinfo/{{ . }}
+          type: File
+      {{- end }}
       - name: config
         configMap:
           name: {{ $fullName }}-sched
