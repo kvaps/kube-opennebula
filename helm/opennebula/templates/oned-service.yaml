@@ -8,9 +8,9 @@ metadata:
   name: {{ $fullName }}-oned-servers
   labels:
     app: {{ $fullName }}-oned
-{{- if .Values.oned.service.labels }}
-{{ toYaml .Values.oned.service.labels | indent 4 }}
-{{- end }}
+    {{- if .Values.oned.service.labels }}
+    {{- toYaml .Values.oned.service.labels | nindent 4 }}
+    {{- end }}
 spec:
   publishNotReadyAddresses: true
   clusterIP: None

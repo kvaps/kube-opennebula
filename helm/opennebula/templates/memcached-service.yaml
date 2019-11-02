@@ -1,12 +1,20 @@
+{{- if .Values.memcached.enabled }}
+{{- $fullName := include "opennebula.fullname" . -}}
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: opennebula-memcached
+  name: {{ $fullName }}-memcached
+  labels:
+    app: {{ $fullName }}-memcached
+    {{- if .Values.memcached.service.labels }}
+    {{- toYaml .Values.memcached.service.labels | nindent 4 }}
+    {{- end }}
 spec:
   ports:
   - name: memcached
     port: 11211
   selector:
-    app: opennebula-memcached
+    app: {{ $fullName }}-memcached
   type: ClusterIP
+{{- end }}

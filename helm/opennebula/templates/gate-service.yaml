@@ -1,12 +1,20 @@
+{{- if .Values.gate.enabled }}
+{{- $fullName := include "opennebula.fullname" . -}}
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: opennebula-gate
+  name: {{ $fullName }}-gate
+  labels:
+    app: {{ $fullName }}-gate
+    {{- if .Values.gate.service.labels }}
+    {{- toYaml .Values.gate.service.labels | nindent 4 }}
+    {{- end }}
 spec:
   ports:
   - name: http
-    port: 5030
+    port: {{ .Values.flow.service.port }}
   selector:
-    app: opennebula-gate
+    app: {{ $fullName }}-gate
   type: ClusterIP
+{{- end }}

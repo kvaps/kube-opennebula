@@ -1,5 +1,31 @@
 timezone: Europe/Prague
 
+persistence:
+  data:
+    enabled: false
+    # storageClassName: default
+    accessModes:
+      - ReadWriteOnce
+    size: 10Gi
+    # annotations: {}
+    finalizers:
+      - kubernetes.io/pvc-protection
+    # subPath: ""
+    # existingClaim:
+
+  shared:
+    enabled: false
+    # storageClassName: default
+    accessModes:
+      - ReadWriteMany
+    size: 10Gi
+    # annotations: {}
+    finalizers:
+      - kubernetes.io/pvc-protection
+    # subPath: ""
+    # existingClaim:
+
+
 oned:
   enabled: true
   labels: {}
@@ -25,6 +51,7 @@ oned:
   oneadminPasswd: asdasdASD
   serveradminPasswd: vae7thailahh7kiexa2phaipooChah
   oneKey: chaizao3hie1chaiDathaej1puuFoo
+  #sshKey:
 
   # Database config
   db:
@@ -54,22 +81,18 @@ oned:
   ingress:
     enabled: true
     labels: {}
-
     ## Annotations.
     ##
     # annotations: {}
     annotations:
       kubernetes.io/ingress.class: nginx
-      kubernetes.io/tls-acme: "true"
-
-
+      #kubernetes.io/tls-acme: "true"
     ## Hostnames.
     ## Must be provided if Ingress is enabled.
     ##
     # hosts: []
     hosts:
       - opennebula.example.org
-
     ## TLS configuration for Prometheus Ingress
     ## Secret must be manually created in the namespace
     ##
@@ -79,31 +102,216 @@ oned:
         hosts:
           - opennebula.example.org
 
-persistence:
-  data:
-    enabled: false
-    # storageClassName: default
-    accessModes:
-      - ReadWriteOnce
-    size: 10Gi
-    # annotations: {}
-    finalizers:
-      - kubernetes.io/pvc-protection
-    # subPath: ""
-    # existingClaim:
+sched:
+  enabled: true
+  labels: {}
+  replicas: 1
 
-  shared:
-    enabled: false
-    # storageClassName: default
-    accessModes:
-      - ReadWriteMany
-    size: 10Gi
+  image:
+    repository: docker.io/kvaps/opennebula
+    tag: tight-integration
+    pullPolicy: IfNotPresent
+    pullSecrets:
+      - name: regsecret
+
+  nodeSelector:
+    node-role.kubernetes.io/master: ""
+  
+  tolerations:
+    - key: node-role.kubernetes.io/master
+      operator: Exists
+      effect: NoSchedule
+
+sunstone:
+  enabled: true
+  labels: {}
+  replicas: 3
+
+  image:
+    repository: docker.io/kvaps/opennebula-sunstone
+    tag: v5.8.5
+    pullPolicy: IfNotPresent
+    pullSecrets:
+      - name: regsecret
+
+  service:
+    labels: {}
+    port: 9869
+
+  ingress:
+    enabled: true
+    labels: {}
+    ## Annotations.
+    ##
     # annotations: {}
-    finalizers:
-      - kubernetes.io/pvc-protection
-    # subPath: ""
-    # existingClaim:
+    annotations:
+      kubernetes.io/ingress.class: nginx
+      nginx.ingress.kubernetes.io/proxy-body-size: 5000m
+      #kubernetes.io/tls-acme: "true"
+    ## Hostnames.
+    ## Must be provided if Ingress is enabled.
+    ##
+    # hosts: []
+    hosts:
+      - opennebula.example.org
+    ## TLS configuration for Prometheus Ingress
+    ## Secret must be manually created in the namespace
+    ##
+    # tls: []
+    tls:
+      - secretName: opennebula-tls
+        hosts:
+          - opennebula.example.org
+
+novnc:
+  enabled: true
+
+  image:
+    repository: docker.io/kvaps/opennebula-sunstone
+    tag: v5.8.5
+    pullPolicy: IfNotPresent
+    pullSecrets:
+      - name: regsecret
+
+  service:
+    labels: {}
+    port: 29876
+
+  ingress:
+    enabled: true
+    labels: {}
+    ## Annotations.
+    ##
+    # annotations: {}
+    annotations:
+      kubernetes.io/ingress.class: nginx
+      #kubernetes.io/tls-acme: "true"
+    ## Hostnames.
+    ## Must be provided if Ingress is enabled.
+    ##
+    # hosts: []
+    hosts:
+      - opennebula.example.org
+    ## TLS configuration for Prometheus Ingress
+    ## Secret must be manually created in the namespace
+    ##
+    # tls: []
+    tls:
+      - secretName: opennebula-tls
+        hosts:
+          - opennebula.example.org
+
+
+memcached:
+  enabled: true
+  replicas: 1
+
+  image:
+    repository: docker.io/library/memcached
+    tag: 1.5.6-alpine
+    pullPolicy: IfNotPresent
+    pullSecrets:
+      - name: regsecret
+
+  nodeSelector:
+    node-role.kubernetes.io/master: ""
+  
+  tolerations:
+    - key: node-role.kubernetes.io/master
+      operator: Exists
+      effect: NoSchedule
+
+  service:
+    labels: {}
+    port: 11211
+
+
+gate:
+  enabled: true
+  replicas: 1
+
+  image:
+    repository: docker.io/kvaps/opennebula-gate
+    tag: v5.8.5
+    pullPolicy: IfNotPresent
+    pullSecrets:
+      - name: regsecret
+
+  nodeSelector:
+    node-role.kubernetes.io/master: ""
+  
+  tolerations:
+    - key: node-role.kubernetes.io/master
+      operator: Exists
+      effect: NoSchedule
+
+  service:
+    labels: {}
+    port: 5030
+
+  ingress:
+    enabled: true
+    labels: {}
+    ## Annotations.
+    ##
+    # annotations: {}
+    annotations:
+      kubernetes.io/ingress.class: nginx
+      #kubernetes.io/tls-acme: "true"
+    ## Hostnames.
+    ## Must be provided if Ingress is enabled.
+    ##
+    # hosts: []
+    hosts:
+      - opennebula-gate.example.org
+    ## TLS configuration for Prometheus Ingress
+    ## Secret must be manually created in the namespace
+    ##
+    # tls: []
+    tls:
+      - secretName: opennebula-tls
+        hosts:
+          - opennebula-gate.example.org
+
+flow:
+  enabled: true
+  replicas: 1
+
+  image:
+    repository: docker.io/kvaps/opennebula-flow
+    tag: v5.8.5
+    pullPolicy: IfNotPresent
+    pullSecrets:
+      - name: regsecret
+
+  nodeSelector:
+    node-role.kubernetes.io/master: ""
+  
+  tolerations:
+    - key: node-role.kubernetes.io/master
+      operator: Exists
+      effect: NoSchedule
+
+  service:
+    labels: {}
+    port: 2474
 
 externalNode:
   enabled: false
+
+  image:
+    repository: docker.io/kvaps/opennebula-gate
+    tag: v5.8.5
+    pullPolicy: IfNotPresent
+    pullSecrets:
+      - name: regsecret
+
+  nodeSelector:
+    node-role.kubernetes.io/master: ""
+  
+  tolerations:
+    - key: node-role.kubernetes.io/master
+      operator: Exists
+      effect: NoSchedule
+
   mounts:

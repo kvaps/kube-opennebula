@@ -1,21 +1,24 @@
+{{- if .Values.gate.enabled }}
+{{- $fullName := include "opennebula.fullname" . -}}
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: opennebula-flow
+  name: {{ $fullName }}-flow
 spec:
-  replicas: 1
+  replicas: {{ .Values.gate.replicas }}
   selector:
     matchLabels:
-      app: opennebula-flow
+      app: {{ $fullName }}-flow
   template:
     metadata:
       labels:
-        app: opennebula-flow
+        app: {{ $fullName }}-flow
     spec:
       containers:
       - name: oneflow
-        image: kvaps/opennebula-flow
+        image: {{ .Values.flow.image.repository }}:{{ .Values.flow.image.tag }}
+        imagePullPolicy: {{ .Values.flow.image.pullPolicy }}
         command: [ "/usr/bin/ruby", "/usr/lib/one/oneflow/oneflow-server.rb" ]
         ports:
         - name: http
@@ -27,22 +30,26 @@ spec:
         - mountPath: /var/lib/one/.one/oneflow_auth
           name: one-keys
           subPath: oneflow_auth
+      {{- with .Values.flow.image.pullSecrets }}
       imagePullSecrets:
-      - name: regsecret
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+      {{- with .Values.flow.nodeSelector }}
       nodeSelector:
-        node-role.kubernetes.io/master: ""
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.flow.tolerations }}
+      tolerations:
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
       securityContext:
         fsGroup: 9869
         runAsUser: 9869
-      tolerations:
-      - effect: NoSchedule
-        key: node-role.kubernetes.io/master
       volumes:
       - name: config
         configMap:
-          name: opennebula-flow
+          name: {{ $fullName }}-flow
       - name: one-keys
         secret:
-          secretName: opennebula-one-keys
-      - name: shared
-        emptyDir: {}
+          secretName: {{ $fullName }}-one-keys
+{{- end }}

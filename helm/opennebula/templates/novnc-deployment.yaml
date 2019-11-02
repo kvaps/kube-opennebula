@@ -1,21 +1,24 @@
+{{- if .Values.sunstone.enabled }}
+{{- $fullName := include "opennebula.fullname" . -}}
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: opennebula-novnc
+  name: {{ $fullName }}-novnc
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: opennebula-novnc
+      app: {{ $fullName }}-novnc
   template:
     metadata:
       labels:
-        app: opennebula-novnc
+        app: {{ $fullName }}-novnc
     spec:
       containers:
       - name: novnc
-        image: kvaps/opennebula-sunstone:v5.8.5
+        image: {{ .Values.sunstone.image.repository }}:{{ .Values.sunstone.image.tag }}
+        imagePullPolicy: {{ .Values.sunstone.image.pullPolicy }}
         command: [ '/usr/bin/ruby', '/usr/bin/novnc-server', 'start' ]
         ports:
         - name: websocket
@@ -27,20 +30,34 @@ spec:
         - name: shared
           mountPath: /var/lib/one/sunstone_vnc_tokens
           subPath: sunstone_vnc_tokens
+      {{- with .Values.sunstone.image.pullSecrets }}
       imagePullSecrets:
-      - name: regsecret
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+      {{- with .Values.sunstone.nodeSelector }}
       nodeSelector:
-        node-role.kubernetes.io/master: ""
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.sunstone.tolerations }}
+      tolerations:
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
       securityContext:
         fsGroup: 9869
         runAsUser: 9869
-      tolerations:
-      - effect: NoSchedule
-        key: node-role.kubernetes.io/master
       volumes:
       - name: config
         configMap:
-          name: opennebula-novnc
+          name: {{ $fullName }}-novnc
       - name: shared
-        emptyDir: {}
-
+        {{- if .Values.persistence.shared.enabled }}
+        persistentVolumeClaim:
+          {{- if .Values.persistence.shared.existingClaim }}
+          claimName: {{ .Values.persistence.shared.existingClaim }}
+          {{- else }}
+          claimName: {{ $fullName }}-shared
+          {{- end }}
+        {{- else }}
+        emptyDir:
+        {{- end }}
+{{- end }}

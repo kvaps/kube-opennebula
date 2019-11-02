@@ -1,19 +1,33 @@
+{{- if and .Values.gate.enabled .Values.gate.ingress.enabled }}
+{{- $fullName := include "opennebula.fullname" . -}}
+{{- $servicePort := .Values.gate.service.port -}}
 ---
 apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
+  name: {{ $fullName }}-gate
+  labels:
+    app: {{ $fullName }}-gate
+{{- if .Values.gate.ingress.labels }}
+{{ toYaml .Values.gate.ingress.labels | indent 4 }}
+{{- end }}
+{{- with .Values.gate.ingress.annotations }}
   annotations:
-    kubernetes.io/ingress.class: nginx
-  name: opennebula-gate
+{{ toYaml . | indent 4 }}
+{{- end }}
 spec:
   rules:
-  - host: opennebula-gate.example.org
+  {{- range .Values.gate.ingress.hosts }}
+  - host: {{ . }}
     http:
       paths:
-      - backend:
-          serviceName: opennebula-gate
-          servicePort: 9869
+      - path: /
+        backend:
+          serviceName: {{ $fullName }}-gate
+          servicePort:  {{ $servicePort }}
+  {{- end }}
+{{- if .Values.gate.ingress.tls }}
   tls:
-  - hosts:
-    - opennebula-gate.example.org
-    secretName: opennebula-gate-tls
+{{ toYaml .Values.gate.ingress.tls | indent 4 }}
+{{- end }}
+{{- end }}

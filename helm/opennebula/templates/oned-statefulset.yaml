@@ -122,15 +122,15 @@ spec:
       terminationGracePeriodSeconds: 30
       {{- with .Values.oned.image.pullSecrets }}
       imagePullSecrets:
-{{ toYaml . | indent 6 }}
+      {{- toYaml . | nindent 6 }}
       {{- end }}
       {{- with .Values.oned.nodeSelector }}
       nodeSelector:
-{{ toYaml . | indent 8 }}
+        {{- toYaml . | nindent 8 }}
       {{- end }}
       {{- with .Values.oned.tolerations }}
       tolerations:
-{{ toYaml . | indent 6 }}
+      {{- toYaml . | nindent 6 }}
       {{- end }}
       securityContext:
         fsGroup: 9869

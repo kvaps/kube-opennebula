@@ -1,12 +1,14 @@
+{{- if .Values.sunstone.enabled }}
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: opennebula-sunstone
+  name: {{ template "opennebula.fullname" . }}-sunstone
 data:
   sunstone-server.conf: |+
-{{- .Files.Get "config/sunstone-server.conf" | nindent 4 }}
+    {{- tpl (.Files.Get "config/sunstone-server.conf") . | nindent 4 }}
   sunstone-views.yaml: |+
-{{- .Files.Get "config/sunstone-views.yaml" | nindent 4 }}
+    {{- tpl (.Files.Get "config/sunstone-views.yaml") . | nindent 4 }}
   sunstone-logos.yaml: |+
-{{- .Files.Get "config/sunstone-logos.yaml" | nindent 4 }}
+    {{- tpl (.Files.Get "config/sunstone-logos.yaml") . | nindent 4 }}
+{{- end }}

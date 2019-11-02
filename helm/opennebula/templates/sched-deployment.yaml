@@ -1,21 +1,24 @@
+{{- if .Values.sched.enabled }}
+{{- $fullName := include "opennebula.fullname" . -}}
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: opennebula-sched
+  name: {{ $fullName }}-sched
 spec:
-  replicas: 1
+  replicas: {{ .Values.sched.replicas }}
   selector:
     matchLabels:
-      app: opennebula-sched
+      app: {{ $fullName }}-sched
   template:
     metadata:
       labels:
-        app: opennebula-sched
+        app: {{ $fullName }}-sched
     spec:
       containers:
       - name: sched
-        image: kvaps/opennebula:tight-integration
+        image: {{ .Values.sched.image.repository }}:{{ .Values.sched.image.tag }}
+        imagePullPolicy: {{ .Values.sched.image.pullPolicy }}
         command: [ '/usr/bin/mm_sched' ]
         volumeMounts:
         - name: config
@@ -24,25 +27,26 @@ spec:
         - name: one-keys
           mountPath: /var/lib/one/.one/one_auth
           subPath: one_auth
-        - name: shared
-          mountPath: /var/log/one
-          subPath: log
+      {{- with .Values.sched.image.pullSecrets }}
       imagePullSecrets:
-      - name: regsecret
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+      {{- with .Values.oned.nodeSelector }}
       nodeSelector:
-        node-role.kubernetes.io/master: ""
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.oned.tolerations }}
+      tolerations:
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
       securityContext:
         fsGroup: 9869
         runAsUser: 9869
-      tolerations:
-      - effect: NoSchedule
-        key: node-role.kubernetes.io/master
       volumes:
       - name: config
         configMap:
-          name: opennebula-sched
+          name: {{ $fullName }}-sched
       - name: one-keys
         secret:
-          secretName: opennebula-one-keys
-      - name: shared
-        emptyDir: {}
+          secretName: {{ $fullName }}-one-keys
+{{ end }}

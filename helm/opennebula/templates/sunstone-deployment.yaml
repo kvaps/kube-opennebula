@@ -1,21 +1,24 @@
+{{- if .Values.sunstone.enabled }}
+{{- $fullName := include "opennebula.fullname" . -}}
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: opennebula-sunstone
+  name: {{ $fullName }}-sunstone
 spec:
-  replicas: 1
+  replicas: {{ .Values.sunstone.replicas }}
   selector:
     matchLabels:
-      app: opennebula-sunstone
+      app: {{ $fullName }}-sunstone
   template:
     metadata:
       labels:
-        app: opennebula-sunstone
+        app: {{ $fullName }}-sunstone
     spec:
       containers:
       - name: sunstone
-        image: kvaps/opennebula-sunstone:v5.8.5
+        image: {{ .Values.sunstone.image.repository }}:{{ .Values.sunstone.image.tag }}
+        imagePullPolicy: {{ .Values.sunstone.image.pullPolicy }}
         command: [ "/usr/bin/ruby", "/usr/lib/one/sunstone/sunstone-server.rb" ]
         lifecycle:
           postStart:
@@ -46,22 +49,37 @@ spec:
             port: 9869
           initialDelaySeconds: 5
           periodSeconds: 5
+      {{- with .Values.sunstone.image.pullSecrets }}
       imagePullSecrets:
-      - name: regsecret
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+      {{- with .Values.sunstone.nodeSelector }}
       nodeSelector:
-        node-role.kubernetes.io/master: ""
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.sunstone.tolerations }}
+      tolerations:
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
       securityContext:
         fsGroup: 9869
         runAsUser: 9869
-      tolerations:
-      - effect: NoSchedule
-        key: node-role.kubernetes.io/master
       volumes:
       - configMap:
-          name: opennebula-sunstone
+          name: {{ $fullName }}-sunstone
         name: config
       - name: one-keys
         secret:
-          secretName: opennebula-one-keys
+          secretName: {{ $fullName }}-one-keys
       - name: shared
-        emptyDir: {}
+        {{- if .Values.persistence.shared.enabled }}
+        persistentVolumeClaim:
+          {{- if .Values.persistence.shared.existingClaim }}
+          claimName: {{ .Values.persistence.shared.existingClaim }}
+          {{- else }}
+          claimName: {{ $fullName }}-shared
+          {{- end }}
+        {{- else }}
+        emptyDir:
+        {{- end }}
+{{- end }}

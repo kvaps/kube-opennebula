@@ -1,20 +1,33 @@
+{{- if and .Values.sunstone.enabled .Values.sunstone.ingress.enabled }}
+{{- $fullName := include "opennebula.fullname" . -}}
+{{- $servicePort := .Values.sunstone.service.port -}}
 ---
 apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
+  name: {{ $fullName }}-sunstone
+  labels:
+    app: {{ $fullName }}-sunstone
+{{- if .Values.sunstone.ingress.labels }}
+{{ toYaml .Values.sunstone.ingress.labels | indent 4 }}
+{{- end }}
+{{- with .Values.sunstone.ingress.annotations }}
   annotations:
-    kubernetes.io/ingress.class: nginx
-    nginx.ingress.kubernetes.io/proxy-body-size: 5000m
-  name: opennebula-sunstone
+{{ toYaml . | indent 4 }}
+{{- end }}
 spec:
   rules:
-  - host: opennebula.example.org
+  {{- range .Values.sunstone.ingress.hosts }}
+  - host: {{ . }}
     http:
       paths:
-      - backend:
-          serviceName: opennebula-sunstone
-          servicePort: 9869
+      - path: /
+        backend:
+          serviceName: {{ $fullName }}-sunstone
+          servicePort:  {{ $servicePort }}
+  {{- end }}
+{{- if .Values.sunstone.ingress.tls }}
   tls:
-  - hosts:
-    - opennebula.example.org
-    secretName: opennebula-sunstone-tls
+{{ toYaml .Values.sunstone.ingress.tls | indent 4 }}
+{{- end }}
+{{- end }}

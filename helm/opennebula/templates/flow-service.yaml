@@ -1,12 +1,20 @@
+{{- if .Values.flow.enabled }}
+{{- $fullName := include "opennebula.fullname" . -}}
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: opennebula-flow
+  name: {{ $fullName }}-flow
+  labels:
+    app: {{ $fullName }}-flow
+    {{- if .Values.flow.service.labels }}
+    {{- toYaml .Values.flow.service.labels | nindent 4 }}
+    {{- end }}
 spec:
   ports:
   - name: http
-    port: 2474
+    port: {{ .Values.flow.service.port }}
   selector:
-    app: opennebula-flow
+    app: {{ $fullName }}-flow
   type: ClusterIP
+{{- end }}

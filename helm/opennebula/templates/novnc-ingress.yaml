@@ -1,20 +1,33 @@
+{{- if and .Values.novnc.enabled .Values.novnc.ingress.enabled }}
+{{- $fullName := include "opennebula.fullname" . -}}
+{{- $servicePort := .Values.novnc.service.port -}}
 ---
 apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
+  name: {{ $fullName }}-novnc
+  labels:
+    app: {{ $fullName }}-novnc
+{{- if .Values.novnc.ingress.labels }}
+{{ toYaml .Values.novnc.ingress.labels | indent 4 }}
+{{- end }}
+{{- with .Values.novnc.ingress.annotations }}
   annotations:
-    kubernetes.io/ingress.class: nginx
-  name: opennebula-novnc
+{{ toYaml . | indent 4 }}
+{{- end }}
 spec:
   rules:
-  - host: opennebula.example.org
+  {{- range .Values.novnc.ingress.hosts }}
+  - host: {{ . }}
     http:
       paths:
       - path: /websockify
         backend:
-          serviceName: opennebula-novnc
-          servicePort: 29876
+          serviceName: {{ $fullName }}-novnc
+          servicePort:  {{ $servicePort }}
+  {{- end }}
+{{- if .Values.novnc.ingress.tls }}
   tls:
-  - hosts:
-    - opennebula.example.org
-    secretName: opennebula-novnc-tls
+{{ toYaml .Values.novnc.ingress.tls | indent 4 }}
+{{- end }}
+{{- end }}

@@ -1,32 +1,40 @@
+{{- if .Values.memcached.enabled }}
+{{- $fullName := include "opennebula.fullname" . -}}
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: opennebula-memcached
+  name: {{ $fullName }}-memcached
 spec:
-  replicas: 1
+  replicas: {{ .Values.memcached.replicas }}
   selector:
     matchLabels:
-      app: opennebula-memcached
+      app: {{ $fullName }}-memcached
   template:
     metadata:
       labels:
-        app: opennebula-memcached
+        app: {{ $fullName }}-memcached
     spec:
       containers:
       - name: memcached
-        image: memcached:1.5.6-alpine
+        image: {{ .Values.memcached.image.repository }}:{{ .Values.memcached.image.tag }}
+        imagePullPolicy: {{ .Values.memcached.image.pullPolicy }}
         ports:
         - name: memcached
           containerPort: 11211
+      {{- with .Values.memcached.image.pullSecrets }}
       imagePullSecrets:
-      - name: regsecret
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+      {{- with .Values.memcached.nodeSelector }}
       nodeSelector:
-        node-role.kubernetes.io/master: ""
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.memcached.tolerations }}
+      tolerations:
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
       securityContext:
         fsGroup: 9869
         runAsUser: 9869
-      tolerations:
-      - effect: NoSchedule
-        key: node-role.kubernetes.io/master
-
+{{- end }}

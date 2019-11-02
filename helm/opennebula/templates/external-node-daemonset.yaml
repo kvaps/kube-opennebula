@@ -1,18 +1,21 @@
+{{- if .Values.externalNode.enabled }}
+{{- $fullName := include "opennebula.fullname" . -}}
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: opennebula-external-node
+  name: {{ $fullName }}-external-node
 spec:
   selector:
     matchLabels:
-      app: opennebula-external-node
+      app: {{ $fullName }}-external-node
   template:
     metadata:
       labels:
-        app: opennebula-external-node
+        app: {{ $fullName }}-external-node
     spec:
       containers:
-      - image: ubuntu:18.04
+        image: {{ .Values.externalNode.image.repository }}:{{ .Values.externalNode.image.tag }}
+        imagePullPolicy: {{ .Values.externalNode.image.pullPolicy }}
         name: opennebula-node
         command: [ '/bin/bash', '/config/script.sh' ]
         securityContext:
@@ -25,17 +28,23 @@ spec:
       hostIPC: true
       hostNetwork: true
       hostPID: true
+      {{- with .Values.externalNode.image.pullSecrets }}
       imagePullSecrets:
-      - name: regsecret
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+      {{- with .Values.externalNode.nodeSelector }}
       nodeSelector:
-        node-role.kubernetes.io/master: ""
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.externalNode.tolerations }}
       tolerations:
-      - effect: NoSchedule
-        key: node-role.kubernetes.io/master
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
       volumes:
       - configMap:
-          name: opennebula-external-node
+          name: {{ $fullName }}-external-node
         name: config
       - name: ssh-keys
         secret:
-          secretName: opennebula-ssh-keys
+          secretName: {{ $fullName }}-ssh-keys
+{{- end }}
