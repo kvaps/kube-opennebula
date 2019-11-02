@@ -1,28 +1,48 @@
-timezone: Europe/Prague
+# Specified timezone should be existing by path
+# /usr/share/zoneinfo/<timezone>
+
+timezone:
+
+# ------------------------------------------------------------------------------
+# Persistent Volume configuration
+# ------------------------------------------------------------------------------
 
 persistence:
+
+  # Volume for OpenNebula Database
   data:
     enabled: false
-    storageClassName: default
     accessModes:
     - ReadWriteOnce
     size: 10Gi
+    storageClassName: default
     annotations: {}
     finalizers:
     - kubernetes.io/pvc-protection
+
+    # Use existing PVC instead
     existingClaim:
 
+  # OpenNebula Shared volume, used for sharing logs, novnc tokens
+  # and as temporary storage for uploading images via Sunstone
+  # necessary if you need these features
   shared:
     enabled: false
-    storageClassName: default
+
     accessModes:
     - ReadWriteMany
     size: 10Gi
+    storageClassName: default
     annotations: {}
     finalizers:
     - kubernetes.io/pvc-protection
+
+    # Use existing PVC instead
     existingClaim:
 
+# ------------------------------------------------------------------------------
+# Main OpenNebula daemon configuration
+# ------------------------------------------------------------------------------
 
 oned:
   enabled: true
@@ -32,6 +52,8 @@ oned:
   podAnnotations: {}
 
   replicas: 3
+
+  # Allow to bootsrap new cluster
   createCluster: 1
 
   image:
@@ -41,18 +63,16 @@ oned:
     pullSecrets:
     - name: regsecret
 
-  nodeSelector:
-    node-role.kubernetes.io/master: ""
-  
-  tolerations:
-  - key: node-role.kubernetes.io/master
-    operator: Exists
-    effect: NoSchedule
+  nodeSelector: {}
+  tolerations: []
 
-  oneadminPasswd: asdasdASD
-  serveradminPasswd: vae7thailahh7kiexa2phaipooChah
-  oneKey: chaizao3hie1chaiDathaej1puuFoo
-  #sshKey:
+  # Specify passwords for default accounts
+  oneadminPasswd:
+  serveradminPasswd:
+  oneKey:
+
+  # Specify id_rsa private key for ssh connections
+  sshKey:
 
   port: 2633
   service:
@@ -60,7 +80,7 @@ oned:
     annotations: {}
     port: 2633
 
-  # Database config
+  # Database configuration
   db:
     enabled: true
     backend: mysql
@@ -70,13 +90,15 @@ oned:
     passwd: oneadmin
     dbName: opennebula
     connections: 50
-    rootPasswd: vahch9saz6ogeaP4ou7P
+    rootPasswd:
 
     image:
       repository: docker.io/library/mysql
       tag: 8.0.18
       pullPolicy: IfNotPresent
 
+  # Specify nodePort for collectd service (30000-32767)
+  # port and nodePort should be the same
   collectd:
     port: 32155
     nodePort: 32155
@@ -85,7 +107,7 @@ oned:
     enabled: true
     labels: {}
     annotations:
-      kubernetes.io/ingress.class: nginx
+      #kubernetes.io/ingress.class: nginx
       #kubernetes.io/tls-acme: "true"
     hosts:
     - opennebula.example.org
@@ -93,6 +115,10 @@ oned:
     - secretName: opennebula-tls
       hosts:
       - opennebula.example.org
+
+# ------------------------------------------------------------------------------
+# OpenNebula scheduler configuration
+# ------------------------------------------------------------------------------
 
 sched:
   enabled: true
@@ -107,15 +133,14 @@ sched:
     tag: tight-integration
     pullPolicy: IfNotPresent
     pullSecrets:
-      - name: regsecret
+    - name: regsecret
 
-  nodeSelector:
-    node-role.kubernetes.io/master: ""
-  
-  tolerations:
-    - key: node-role.kubernetes.io/master
-      operator: Exists
-      effect: NoSchedule
+  nodeSelector: {}
+  tolerations: []
+
+# ------------------------------------------------------------------------------
+# Sunstone server configuration
+# ------------------------------------------------------------------------------
 
 sunstone:
   enabled: true
@@ -130,7 +155,7 @@ sunstone:
     tag: v5.8.5
     pullPolicy: IfNotPresent
     pullSecrets:
-      - name: regsecret
+    - name: regsecret
 
   port: 9869
   service:
@@ -142,15 +167,19 @@ sunstone:
     enabled: true
     labels: {}
     annotations:
-      kubernetes.io/ingress.class: nginx
-      nginx.ingress.kubernetes.io/proxy-body-size: 5000m
+      #kubernetes.io/ingress.class: nginx
+      #nginx.ingress.kubernetes.io/proxy-body-size: 5000m
       #kubernetes.io/tls-acme: "true"
     hosts:
-      - opennebula.example.org
+    - opennebula.example.org
     tls:
-      - secretName: opennebula-tls
-        hosts:
-          - opennebula.example.org
+    - secretName: opennebula-tls
+      hosts:
+      - opennebula.example.org
+
+# ------------------------------------------------------------------------------
+# NoVNC server configuration
+# ------------------------------------------------------------------------------
 
 novnc:
   enabled: true
@@ -165,7 +194,7 @@ novnc:
     tag: v5.8.5
     pullPolicy: IfNotPresent
     pullSecrets:
-      - name: regsecret
+    - name: regsecret
 
   port: 29876
   service:
@@ -177,15 +206,18 @@ novnc:
     enabled: true
     labels: {}
     annotations:
-      kubernetes.io/ingress.class: nginx
+      #kubernetes.io/ingress.class: nginx
       #kubernetes.io/tls-acme: "true"
     hosts:
-      - opennebula.example.org
+    - opennebula.example.org
     tls:
-      - secretName: opennebula-tls
-        hosts:
-          - opennebula.example.org
+    - secretName: opennebula-tls
+      hosts:
+      - opennebula.example.org
 
+# ------------------------------------------------------------------------------
+# Memcached server configuration
+# ------------------------------------------------------------------------------
 
 memcached:
   enabled: true
@@ -200,21 +232,20 @@ memcached:
     tag: 1.5.6-alpine
     pullPolicy: IfNotPresent
     pullSecrets:
-      - name: regsecret
+    - name: regsecret
 
-  nodeSelector:
-    node-role.kubernetes.io/master: ""
-  
-  tolerations:
-  - key: node-role.kubernetes.io/master
-    operator: Exists
-    effect: NoSchedule
+  nodeSelector: {}
+  tolerations: []
 
   port: 11211
   service:
     labels: {}
     annotations: {}
     port: 11211
+
+# ------------------------------------------------------------------------------
+# OneGate server configuration
+# ------------------------------------------------------------------------------
 
 gate:
   enabled: true
@@ -231,13 +262,8 @@ gate:
     pullSecrets:
       - name: regsecret
 
-  nodeSelector:
-    node-role.kubernetes.io/master: ""
-  
-  tolerations:
-  - key: node-role.kubernetes.io/master
-    operator: Exists
-    effect: NoSchedule
+  nodeSelector: {}
+  tolerations: []
 
   port: 5030
   service:
@@ -245,11 +271,12 @@ gate:
     annotations: {}
     port: 5030
 
+  # OneGate should use different domain unlike sunstone
   ingress:
     enabled: true
     labels: {}
     annotations:
-      kubernetes.io/ingress.class: nginx
+      #kubernetes.io/ingress.class: nginx
       #kubernetes.io/tls-acme: "true"
     hosts:
     - opennebula-gate.example.org
@@ -257,6 +284,10 @@ gate:
     - secretName: opennebula-tls
       hosts:
       - opennebula-gate.example.org
+
+# ------------------------------------------------------------------------------
+# OneFlow server configuration
+# ------------------------------------------------------------------------------
 
 flow:
   enabled: true
@@ -273,19 +304,18 @@ flow:
     pullSecrets:
     - name: regsecret
 
-  nodeSelector:
-    node-role.kubernetes.io/master: ""
-  
-  tolerations:
-    - key: node-role.kubernetes.io/master
-      operator: Exists
-      effect: NoSchedule
+  nodeSelector: {}
+  tolerations: []
 
   port: 2474
   service:
     labels: {}
     annotations: {}
     port: 2474
+
+# ------------------------------------------------------------------------------
+# External node daemonset configuration
+# ------------------------------------------------------------------------------
 
 externalNode:
   enabled: false
@@ -301,12 +331,7 @@ externalNode:
     pullSecrets:
     - name: regsecret
 
-  nodeSelector:
-    node-role.kubernetes.io/master: ""
-  
-  tolerations:
-  - key: node-role.kubernetes.io/master
-    operator: Exists
-    effect: NoSchedule
+  nodeSelector: {}
+  tolerations: []
 
   mounts:
