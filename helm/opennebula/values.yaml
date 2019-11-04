@@ -312,26 +312,3 @@ flow:
     labels: {}
     annotations: {}
     port: 2474
-
-# ------------------------------------------------------------------------------
-# External node daemonset configuration
-# ------------------------------------------------------------------------------
-
-externalNode:
-  enabled: false
-  labels: {}
-  annotations: {}
-  podLabels: {}
-  podAnnotations: {}
-
-  image:
-    repository: docker.io/kvaps/opennebula-node
-    tag: v5.8.5
-    pullPolicy: IfNotPresent
-    pullSecrets:
-    - name: regsecret
-
-  nodeSelector: {}
-  tolerations: []
-
-  mounts:
