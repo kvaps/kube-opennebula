@@ -22,8 +22,6 @@ spec:
       app: {{ $fullName }}-oned
   serviceName: {{ $fullName }}-oned-servers
   podManagementPolicy: Parallel
-  updateStrategy: 
-    type: OnDelete
   template:
     metadata:
       labels:

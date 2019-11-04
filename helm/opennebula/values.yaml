@@ -152,7 +152,7 @@ sunstone:
 
   image:
     repository: docker.io/kvaps/opennebula-sunstone
-    tag: v5.8.5
+    tag: v5.8.5-fix
     pullPolicy: IfNotPresent
     pullSecrets:
     - name: regsecret
