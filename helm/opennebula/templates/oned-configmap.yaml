@@ -9,5 +9,8 @@ metadata:
     app: {{ $fullName }}-oned
 data:
   oned.conf: |+
-    {{- tpl (.Files.Get "config/oned.conf") . | nindent 4 }}
+    {{- $mergedConfig := include "opennebula.config" (mergeOverwrite (fromYaml (tpl (.Files.Get "config/oned.conf") .)) .Values.oned.configOverrides) -}}
+    {{- $mergedConfig | nindent 4 }}
+    {{- $appendConfig := include "opennebula.config" .Values.oned.configAppends | nindent 4 -}}
+    {{- $appendConfig }}
 {{- end }}

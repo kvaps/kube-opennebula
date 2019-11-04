@@ -9,7 +9,7 @@ metadata:
     app: {{ $fullName }}-sunstone
 data:
   sunstone-server.conf: |+
-    {{- tpl (.Files.Get "config/sunstone-server.conf") . | nindent 4 }}
+    {{- toYaml (mergeOverwrite (fromYaml (tpl (.Files.Get "config/sunstone-server.conf") .)) .Values.sunstone.configOverrides) | nindent 4 }}
   sunstone-views.yaml: |+
     {{- tpl (.Files.Get "config/sunstone-views.yaml") . | nindent 4 }}
   sunstone-logos.yaml: |+

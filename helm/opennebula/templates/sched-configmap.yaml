@@ -9,5 +9,6 @@ metadata:
     app: {{ $fullName }}-sched
 data:
   sched.conf: |+
-    {{- tpl (.Files.Get "config/sched.conf") . | nindent 4 }}
+    {{- $mergedConfig := include "opennebula.config" (mergeOverwrite (fromYaml (tpl (.Files.Get "config/sched.conf") .)) .Values.sched.configOverrides) -}}
+    {{ $mergedConfig | nindent 4 -}}
 {{- end }}

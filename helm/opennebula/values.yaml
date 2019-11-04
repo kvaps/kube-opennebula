@@ -116,6 +116,12 @@ oned:
       hosts:
       - opennebula.example.org
 
+  configOverrides:
+    LOG:
+      SYSTEM: file
+      DEBUG_LEVEL: 3
+  configAppends: {}
+
 # ------------------------------------------------------------------------------
 # OpenNebula scheduler configuration
 # ------------------------------------------------------------------------------
@@ -137,6 +143,11 @@ sched:
 
   nodeSelector: {}
   tolerations: []
+
+  configOverrides:
+    LOG:
+      system: std
+      debug_level: 3
 
 # ------------------------------------------------------------------------------
 # Sunstone server configuration
@@ -176,6 +187,9 @@ sunstone:
     - secretName: opennebula-tls
       hosts:
       - opennebula.example.org
+
+  configOverrides:
+    :debug_level: 3
 
 # ------------------------------------------------------------------------------
 # NoVNC server configuration
@@ -285,6 +299,9 @@ gate:
       hosts:
       - opennebula-gate.example.org
 
+  configOverrides:
+    :debug_level: 3
+
 # ------------------------------------------------------------------------------
 # OneFlow server configuration
 # ------------------------------------------------------------------------------
@@ -312,3 +329,6 @@ flow:
     labels: {}
     annotations: {}
     port: 2474
+
+  configOverrides:
+    :debug_level: 2

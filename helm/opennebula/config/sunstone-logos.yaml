@@ -1,5 +1,3 @@
-# You can add custom logos here, or disable any of the default ones commenting
-# out its line
 - { 'name': "Alpine Linux",    'path': "images/logos/alpine.png"}
 - { 'name': "ALT",             'path': "images/logos/alt.png"}
 - { 'name': "Arch Linux",      'path': "images/logos/arch.png"}

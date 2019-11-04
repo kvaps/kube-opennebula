@@ -9,5 +9,5 @@ metadata:
     app: {{ $fullName }}-novnc
 data:
   sunstone-server.conf: |+
-    {{- tpl (regexReplaceAll ":vnc_proxy_support_wss: .*" (.Files.Get "config/sunstone-server.conf") ":vnc_proxy_support_wss: no") . | nindent 4 }}
+    {{- toYaml (mergeOverwrite (fromYaml (tpl (regexReplaceAll ":vnc_proxy_support_wss: .*" (.Files.Get "config/sunstone-server.conf") ":vnc_proxy_support_wss: no") .)) .Values.sunstone.configOverrides) | nindent 4 }}
 {{- end }}

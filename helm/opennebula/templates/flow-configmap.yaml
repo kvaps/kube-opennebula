@@ -9,5 +9,5 @@ metadata:
     app: {{ $fullName }}-flow
 data:
   oneflow-server.conf: |+
-    {{- tpl (.Files.Get "config/oneflow-server.conf") . | nindent 4 }}
+    {{- toYaml (mergeOverwrite (fromYaml (tpl (.Files.Get "config/oneflow-server.conf") .)) .Values.flow.configOverrides) | nindent 4 }}
 {{- end }}

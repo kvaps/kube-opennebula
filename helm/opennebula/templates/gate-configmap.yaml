@@ -9,5 +9,5 @@ metadata:
     app: {{ $fullName }}-gate
 data:
   onegate-server.conf: |+
-    {{- tpl (.Files.Get "config/onegate-server.conf") . | nindent 4 }}
+    {{- toYaml (mergeOverwrite (fromYaml (tpl (.Files.Get "config/onegate-server.conf") .)) .Values.gate.configOverrides) | nindent 4 }}
 {{- end }}
