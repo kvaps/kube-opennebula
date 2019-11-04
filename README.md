@@ -29,7 +29,7 @@ Helm chart and OpenNebula images ready to deploy on Kubernetes
 
 * Get OpenNebula's ssh-key, and place it to `/var/lib/one/.ssh/authorized_keys` on every node to allow OpenNebula login via ssh.
   ```
-  exec opennebula-oned-0 -c oned -- ssh-keygen -y -f /var/lib/one/.ssh/id_rsa
+  kubectl exec opennebula-oned-0 -c oned -- ssh-keygen -y -f /var/lib/one/.ssh/id_rsa
   ```
 
 * Create new host via OpenNebula Interface.
