@@ -122,6 +122,10 @@ oned:
       DEBUG_LEVEL: 3
   configAppends: {}
 
+  # configuration from this section will be mapped to /etc/auth for oned
+  # you can specify ldap_auth.conf config here for example
+  authConfig: {}
+
 # ------------------------------------------------------------------------------
 # OpenNebula scheduler configuration
 # ------------------------------------------------------------------------------

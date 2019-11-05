@@ -1,0 +1,18 @@
+{{- $fullName := include "opennebula.fullname" . -}}
+{{- with .Values.oned.authConfig }}
+kind: Secret
+metadata:
+  name: {{ $fullName }}-auth-config
+  labels:
+    app: {{ $fullName }}-auth-config
+apiVersion: v1
+data:
+
+  {{- range $key, $value := . }}
+  {{- if eq (printf "%T" .value) "string" }}
+  {{ $key }}: {{ $value | b64enc }}
+  {{- else }}
+  {{ $key }}: {{ toYaml $value | b64enc }}
+  {{- end }}
+  {{- end }}
+{{- end }}

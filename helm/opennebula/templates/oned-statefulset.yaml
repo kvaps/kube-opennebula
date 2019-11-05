@@ -104,6 +104,13 @@ spec:
         {{- end }}
         - name: config
           mountPath: /config
+        {{- with .Values.oned.authConfig }}
+        {{- range $key, $value := . }}
+        - name: auth-config
+          mountPath: /etc/one/auth/{{ $key }}
+          subPath: {{ $key }}
+        {{- end }}
+        {{- end }}
         - name: scripts
           mountPath: /scripts
         - name: one-keys
@@ -152,6 +159,11 @@ spec:
       - name: config
         configMap:
           name: {{ $fullName }}-oned
+      {{- with .Values.oned.authConfig }}
+      - name: auth-config
+        secret:
+          secretName: {{ $fullName }}-auth-config
+      {{- end }}
       - name: scripts
         configMap:
           name: {{ $fullName }}-scripts
