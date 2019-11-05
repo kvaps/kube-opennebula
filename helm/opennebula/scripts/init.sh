@@ -38,7 +38,7 @@ cleanup() {
 
 # Parses option between square brackets (eg. DB = [ DB_BACKEND = "mysql" ] )
 parse_opt() {
-  sed -ne 's/.* [^#]*'"$1"' *= *"\?\([^"]*\)"\?[ ,].*/\1/p'
+  sed 's/\(.*\)#.*/\1/g' | sed -n 's/.*'"$1"' *= *"\?\([^ ,"]\+\)"\?.*/\1/p'
 }
 
 # Sets DB_BACKEND, DB_SERVER, DB_PORT, DB_USER, DB_PASSWD, DB_NAME environment variables
@@ -123,7 +123,7 @@ load_version_info() {
       done
       unset RETRY
 
-      LOCAL_VERSION=$(mysql --defaults-file="$MYSQL_OPTS" -u "$DB_USER" -h "$DB_SERVER" -P "$DB_PORT" "$DB_NAME" -N -B -e 'SELECT version FROM local_db_versioning ORDER BY oid DESC LIMIT 0, 1;' 2>/dev/null)
+      LOCAL_VERSION=$(mysql --defaults-file="$MYSQL_OPTS" -u "$DB_USER" -h "$DB_SERVER" -P "$DB_PORT" "$DB_NAME" -N -B -e 'SELECT version FROM local_db_versioning WHERE oid=(SELECT MAX(oid) FROM local_db_versioning)' 2>/dev/null)
       if [ $? -ne 0 ] && [ "$DB_TABLES" = "local_db_versioning" ]; then
         fatal "local_db_versioning exists but have no versions"
       fi
@@ -201,6 +201,28 @@ load_my_id(){
   fi
 }
 
+# Removes existing database
+drop_db(){
+  case "$DB_BACKEND" in
+    sqlite)
+      rm -f "$(readlink -f /var/lib/one/one.db)"
+      ;;
+    mysql)
+      MYSQL_OPTS=$(mktemp)
+      echo -e "[client]\npassword=$DB_PASSWD" > "$MYSQL_OPTS"
+      mysql --defaults-file="$MYSQL_OPTS" -u "$DB_USER" -h "$DB_SERVER" -P "$DB_PORT" -e "DROP DATABASE $DB_NAME;"
+      mysql --defaults-file="$MYSQL_OPTS" -u "$DB_USER" -h "$DB_SERVER" -P "$DB_PORT" -e "CREATE DATABASE $DB_NAME;"
+      rm -f "$MYSQL_OPTS"
+      ;;
+    '')
+      fatal "Database information is not loaded"
+      ;;
+    *)
+      fatal "Only sqlite and mysql backend support cleanup"
+      ;;
+  esac
+}
+
 # Bootstraps new node
 perform_bootstrap() {
   if [ -z "$DB_BACKEND" ]; then
@@ -210,7 +232,8 @@ perform_bootstrap() {
     fatal "Federation information is not loaded"
   fi
 
-  ONE_PORT=$(awk '/^[^#]*DB *= *\[/,/]/ {f=1} !f;' /config/oned.conf | sed -n 's/^[^#]*PORT *= \([0-9]\+\).*/\1/p')
+  # remove DB = [], take PORT
+  ONE_PORT=$(awk -v RS='\n[^#\n]*DB = \\[[^]]*]' -v ORS= '1;NR==1{print}' /config/oned.conf | sed -n 's/^[^#]*PORT *= \([0-9]\+\).*/\1/p')
   if ! [[ "$ONE_PORT" =~ ^[0-9]+$ ]]; then
     fatal "can not read OpenNebula XML-RPC port from config"
   fi
@@ -253,6 +276,9 @@ perform_bootstrap() {
       sleep 5
       until onezone list >/dev/null 2>&1; do
         if ! kill -0 "$ONED_PID" >/dev/null 2>&1; then
+          info "last 10 lines of oned.log:"
+          tail -n10 /var/log/one/oned.log | sed 's/^/  /'
+          drop_db
           fatal "oned process is dead"
         fi
         info "oned is not ready. waiting 5 sec"
@@ -318,6 +344,7 @@ perform_bootstrap() {
   else
     info "database succesfully bootstraped"
   fi
+  rm -f "$MYSQL_OPTS"
 
   if [ -n "$(ONE_XMLRPC="$LEADER_XMLRPC" onezone show "$FEDERATION_ZONE_ID" -x | /var/lib/one/remotes/datastore/xpath.rb "/ZONE/SERVER_POOL/SERVER[NAME=\"$HOSTNAME\"]/NAME)" | tr -d '\0')" ]; then
     info "$HOSTNAME already member of zone $FEDERATION_ZONE_ID"
@@ -325,9 +352,7 @@ perform_bootstrap() {
     info "adding $HOSTNAME to zone $FEDERATION_ZONE_ID via $LEADER_XMLRPC"
     ONE_XMLRPC="$LEADER_XMLRPC" onezone server-add "$FEDERATION_ZONE_ID" --name "$HOSTNAME" --rpc "$MY_XMLRPC"
     if [ $? -ne 0 ]; then
-      # Ereasing LOCAL_VERSION and die
-      mysql --defaults-file="$MYSQL_OPTS" -u "$DB_USER" -h "$DB_SERVER" -P "$DB_PORT" "$DB_NAME" -e 'DROP TABLE IF EXISTS `local_db_versioning`;'
-      rm -f "$MYSQL_OPTS"
+      drop_db
       fatal "can not add server to zone $FEDERATION_ZONE_ID via $LEADER_XMLRPC"
     fi
   fi
@@ -342,7 +367,7 @@ inject_db_config() {
     fatal "Database information is not loaded"
   fi
 
-  awk -v RS='\n[^#]*DB = \\[[^]]*]' \
+  awk -v RS='\n[^#\n]*DB = \\[[^]]*]' \
     -v ORS= '1;NR==1{printf "\nDB = [ BACKEND = \"'"$DB_BACKEND"'\",\n       SERVER  = \"'"$DB_SERVER"'\",\n       PORT    = '"$DB_PORT"',\n       USER    = \"'"$DB_USER"'\",\n       PASSWD  = \"'"$DB_PASSWD"'\",\n       DB_NAME = \"'"$DB_NAME"'\",\n       CONNECTIONS = '"$DB_CONNECTIONS"' ]"}' 
 }
 
@@ -352,7 +377,7 @@ inject_federation_config() {
     fatal "Federation information is not loaded"
   fi
 
-  awk -v RS='\n[^#]*FEDERATION = \\[[^]]*]' \
+  awk -v RS='\n[^#\n]*FEDERATION = \\[[^]]*]' \
     -v ORS= '1;NR==1{printf "\nFEDERATION = [\n    MODE          = \"'"$FEDERATION_MODE"'\",\n    ZONE_ID       = '"$FEDERATION_ZONE_ID"',\n    SERVER_ID     = '"$FEDERATION_SERVER_ID"',\n    MASTER_ONED   = \"'"$FEDERATION_MASTER_ONED"'\"\n]"}'
 }
 
