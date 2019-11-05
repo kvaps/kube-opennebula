@@ -1,12 +1,17 @@
 name: opennebula
-description: Linstor Controller and Satellites for Kubernetes
-version: v0.2.0
+description: OpenNebula cloud computing platform
+version: v0.3.0
 keywords:
   - opennebula
   - virtualization
 home: https://github.com/kvaps/kube-opennebula
 sources:
-  - https://hub.docker.com/r/kvaps/kube-opennebula
+  - https://github.com/kvaps/kube-opennebula
+  - https://hub.docker.com/r/kvaps/opennebula
+  - https://hub.docker.com/r/kvaps/opennebula-flow
+  - https://hub.docker.com/r/kvaps/opennebula-gate
+  - https://hub.docker.com/r/kvaps/opennebula-node
+  - https://hub.docker.com/r/kvaps/opennebula-sunstone
 maintainers:
   - name: kvaps
     email: kvapss@gmail.com
