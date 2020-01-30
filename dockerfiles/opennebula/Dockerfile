@@ -1,68 +1,120 @@
+# ------------------------------------------------------------------------------
+# Common part
+# ------------------------------------------------------------------------------
+
+# === Stage 1 ===
+
 FROM ubuntu:18.04 as builder
-ARG VERSION=5.8.5
+
+# Setup environment variables
+ENV VERSION=5.10.1 \
+    PKG_VERSION=1 \
+    CONTACT="Unsupported Community Build" \
+    GIT_VERSION="not known" \
+    DISTRO=ubuntu1804
 
 # Install build dependencies
 RUN apt-get update \
- && apt-get install -y pbuilder debhelper ubuntu-dev-tools bash-completion \
+ && apt-get install -y debhelper ubuntu-dev-tools bash-completion \
       bison default-jdk flex javahelper libxmlrpc3-client-java \
       libxmlrpc3-common-java libxml2-dev ruby scons dh-systemd \
       npm ruby-ronn rename
 
 # Download sources
-RUN wget -O - https://github.com/OpenNebula/one/archive/release-$VERSION.tar.gz | tar xzf - \
- && mv one-release-$VERSION opennebula-$VERSION
+RUN wget -q -O - https://github.com/OpenNebula/one/archive/release-$VERSION.tar.gz | tar xzf - \
+ && mv /one-release-$VERSION /opennebula-$VERSION \
+ && wget -q -O - https://github.com/OpenNebula/packages/archive/release-$VERSION.tar.gz | tar xzf - \
+ && mv /packages-release-$VERSION /packages-$VERSION
+
 WORKDIR /opennebula-$VERSION
 
 # Apply patches
-RUN curl https://patch-diff.githubusercontent.com/raw/OpenNebula/one/pull/3569.patch | patch -p1
+RUN wget -q -O - https://patch-diff.githubusercontent.com/raw/OpenNebula/one/pull/3569.diff | patch -p1 \
+ && wget -q -O - https://patch-diff.githubusercontent.com/raw/OpenNebula/one/pull/4141.diff | patch -p1
 
-# Make docs
+# Build docs
 RUN cd share/man \
  && ./build.sh
 
-# Make sunstone
+# Build Sunstone
 RUN cd src/sunstone/public \
  && ./build.sh -d \
  && export PATH=$PATH:$PWD/node_modules/.bin \
  && ./build.sh \
  && rm -rf node_modules/
 
-# Prepare packages
-RUN tar -czf /opennebula-$VERSION.tar.gz /opennebula-$VERSION/
-RUN wget -O - https://github.com/OpenNebula/packages/archive/release-$VERSION.tar.gz | tar xzf - \
- && mv packages-release-$VERSION /packages-$VERSION
-WORKDIR /packages-$VERSION
-RUN sed -i '/^debuild/,$ s/^/#/' ubuntu1804.sh \
- && ./ubuntu1804.sh /opennebula-$VERSION.tar.gz
+# Prepare sources
+RUN tar -czf /opennebula_$VERSION.orig.tar.gz . \
+ && cp -r /packages-$VERSION/templates/$DISTRO/ debian \
+ && wget -q http://downloads.opennebula.org/extra/xmlrpc-c.tar.gz \
+ && tar -czf build_opennebula.tar.gz -C /packages-$VERSION/sources build_opennebula.sh xml_parse_huge.patch
 
-# Build packages
-WORKDIR /root/build-Ubuntu-18.04/opennebula-$VERSION
-RUN apt-get install -y $(dpkg-checkbuilddeps 2>&1 | sed 's/.*Unmet build dependencies: //') \
- && echo build_opennebula.tar.gz >> debian/source/include-binaries \
- && echo xmlrpc-c.tar.gz >> debian/source/include-binaries \
- && dpkg-buildpackage -us -uc \
- && mkdir -p /packages \
- && mv /root/build-Ubuntu-18.04/*.deb /packages/
+# Build Ruby gems
+RUN "/packages-$VERSION/rubygems/build.sh" \
+    "/opennebula_$VERSION.orig.tar.gz" \
+    "/" \
+    "$(echo ${DISTRO} | sed 's/\b./\u\0/g')" \
+    "${VERSION}-${PKG_VERSION}" \
+    "${CONTACT}"
 
+# Generate requirements for all Ruby gem packages and process control template
+RUN for F in /opennebula-rubygem-*.deb; do \
+        _NAME=$(dpkg-deb -f "${F}" Package); \
+        _VERS=$(dpkg-deb -f "${F}" Version); \
+        RUBYGEMS_REQ="${RUBYGEMS_REQ}${_NAME} (= ${_VERS}), "; \
+    done \
+ && m4 -D_VERSION_="${VERSION}" \
+    -D_PKG_VERSION_="${PKG_VERSION}" \
+    -D_CONTACT_="${CONTACT}" \
+    -D_DATE_="${DATE}" \
+    -D_RUBYGEMS_REQ_="${RUBYGEMS_REQ}" \
+    -D_WITH_RUBYGEMS_ \
+    debian/control.m4 > debian/control
+
+# Generate changelog
+RUN printf '%s\n\n' \
+  "opennebula (${VERSION}-${PKG_VERSION}) unstable; urgency=low" \
+  "  * Build for ${VERSION}-${PKG_VERSION} (Git revision ${GIT_VERSION})" \
+  " -- ${CONTACT}  $(date -R)" \
+  > debian/changelog
+
+# Generate gitversion
+RUN echo "${GIT_VERSION}" > debian/gitversion
+  
+# Build source package
+RUN dpkg-source --include-binaries -b .
+
+# Install dependencies
+RUN apt-get install -y $(dpkg-checkbuilddeps 2>&1 | sed 's/.*Unmet build dependencies: //')
+
+# Build binary package
+RUN dpkg-buildpackage -us -uc
+
+# === Stage 2 ===
 
 FROM ubuntu:18.04
 
-# Install opennebula-gems
-COPY --from=builder packages/opennebula-common_*.deb packages/ruby-opennebula_*_all.deb packages/opennebula-tools_*.deb /packages/
+# Install opennebula-common and rubygems
+COPY --from=builder /opennebula-common_*.deb /ruby-opennebula_*_all.deb /opennebula-tools_*.deb /opennebula-rubygem*.deb /packages/
 RUN apt-get update \
  && apt-get -y install /packages/*.deb \
- && /usr/share/one/install_gems --yes \
  && mkdir -p /var/log/one /var/lock/one \
  && apt-get -y clean \
  && chown oneadmin: /var/log/one /var/lock/one
 
+# ------------------------------------------------------------------------------
+# Specific part
+# ------------------------------------------------------------------------------
+
 # Install opennebula
-COPY --from=builder packages/opennebula_*.deb /packages/
+COPY --from=builder /opennebula_*.deb /packages/
 RUN apt-get -y update \
  && apt-get -y install mysql-client \
+ && ln -s /bin/true /usr/bin/systemd-tmpfiles \
  && dpkg -i packages/opennebula_*.deb || true \
  && apt-get -yf install \
  && dpkg -l opennebula \
+ && rm -f /usr/bin/systemd-tmpfiles \
  && apt-get -y clean
 
 # Fix permissions
@@ -70,8 +122,10 @@ RUN chown -R oneadmin:oneadmin /etc/one
 
 # Logging to /dev/stdout
 RUN sed -i 's/\(SYSTEM *= *\)"file"/\1"std"/' /etc/one/oned.conf \
- && sed -i 's/\(system *= *\)"file"/\1"std"/' /etc/one/sched.conf
+ && sed -i 's/\(system *= *\)"file"/\1"std"/' /etc/one/sched.conf \
+ && sed -i 's|\(HEM_LOG *=\).*|\1 "/dev/stdout"|' /usr/lib/one/onehem/onehem-server.rb
 
 USER oneadmin
 ENTRYPOINT [ "/usr/bin/oned", "-f" ]
 #ENTRYPOINT [ "/usr/bin/mm_sched" ]
+#ENTRYPOINT [ "/usr/lib/one/onehem/onehem-server.rb" ]
