@@ -112,6 +112,7 @@ RUN apt-get -y update \
  && ln -s /bin/true /usr/local/bin/systemd-tmpfiles \
  && dpkg -i packages/opennebula-sunstone_*.deb || true \
  && apt-get -yf install \
+ && apt-get -y install libcurl4 \
  && dpkg -l opennebula-sunstone \
  && rm -f /usr/local/bin/systemd-tmpfiles \
  && apt-get -y clean
