@@ -13,7 +13,7 @@ metadata:
     {{- end }}
   {{- with .Values.oned.service.annotations }}
   annotations:
-    {{ toYaml . | indent 4 }}
+    {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
   publishNotReadyAddresses: true
@@ -23,6 +23,29 @@ spec:
     port: {{ $servicePort }}
   selector:
     app: {{ $fullName }}-oned
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $fullName }}-oned-headless
+  labels:
+    app: {{ $fullName }}-oned
+    {{- if .Values.oned.service.labels }}
+    {{- toYaml .Values.oned.service.labels | nindent 4 }}
+    {{- end }}
+  {{- with .Values.oned.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  clusterIP: None
+  ports:
+  - name: http
+    port: {{ $servicePort }}
+  selector:
+    app: {{ $fullName }}-oned
+    role: leader
   type: ClusterIP
 ---
 apiVersion: v1
@@ -44,28 +67,7 @@ spec:
     port: {{ $servicePort }}
   selector:
     app: {{ $fullName }}-oned
-  type: ClusterIP
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: {{ $fullName }}-oned-leader
-  labels:
-    app: {{ $fullName }}-oned
-    {{- if .Values.oned.service.labels }}
-    {{- toYaml .Values.oned.service.labels | nindent 4 }}
-    {{- end }}
-  {{- with .Values.oned.service.annotations }}
-  annotations:
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
-spec:
-  clusterIP: None
-  ports:
-  - name: http
-    port: {{ $servicePort }}
-  selector:
-    app: {{ $fullName }}-oned
+    role: leader
   type: ClusterIP
 ---
 apiVersion: v1
@@ -74,8 +76,8 @@ metadata:
   name: {{ $fullName }}-oned-collectd
   labels:
     app: {{ $fullName }}-oned
-    {{- if .Values.oned.service.labels }}
-    {{- toYaml .Values.oned.service.labels | nindent 4 }}
+    {{- if .Values.oned.collectd.service.labels }}
+    {{- toYaml .Values.oned.collectd.service.labels | nindent 4 }}
     {{- end }}
   {{- with .Values.oned.service.annotations }}
   annotations:
@@ -85,7 +87,7 @@ spec:
   ports:
   - name: collectd
     port: {{ .Values.oned.collectd.port }}
-    nodePort: {{ .Values.oned.collectd.nodePort }}
+    nodePort: {{ .Values.oned.collectd.service.nodePort }}
     protocol: UDP
   selector:
     app: {{ $fullName }}-oned

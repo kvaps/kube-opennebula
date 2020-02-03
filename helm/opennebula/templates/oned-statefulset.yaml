@@ -34,6 +34,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
     spec:
+      serviceAccountName: {{ $fullName }}-oned
       containers:
       {{- if and .Values.oned.db.enabled (eq .Values.oned.db.backend "mysql") }}
       - name: mysql
@@ -63,7 +64,6 @@ spec:
         - name: MYSQL_DATABASE
           value: {{ .Values.oned.db.dbName }}
       {{- end }}
-
       - name: oned
         image: {{ .Values.oned.image.repository }}:{{ .Values.oned.image.tag }}
         imagePullPolicy: {{ .Values.oned.image.pullPolicy }}
@@ -130,9 +130,11 @@ spec:
         readinessProbe:
           exec:
             command:
-            - /scripts/readiness-probe.sh
+            - /usr/bin/onezone
+            - list
           initialDelaySeconds: 5
           periodSeconds: 5
+
       terminationGracePeriodSeconds: 30
       {{- with .Values.oned.image.pullSecrets }}
       imagePullSecrets:

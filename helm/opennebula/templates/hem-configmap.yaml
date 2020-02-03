@@ -1,0 +1,13 @@
+{{- if .Values.hem.enabled }}
+{{- $fullName := include "opennebula.fullname" . -}}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $fullName }}-hem
+  labels:
+    app: {{ $fullName }}-hem
+data:
+  onehem-server.conf: |+
+    {{- toYaml (mergeOverwrite (fromYaml (tpl (.Files.Get "config/onehem-server.conf") .)) .Values.hem.configOverrides) | nindent 4 }}
+{{- end }}

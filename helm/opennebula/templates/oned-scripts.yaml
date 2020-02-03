@@ -7,6 +7,6 @@ metadata:
 data:
   init.sh: |+
 {{- .Files.Get "scripts/init.sh" | nindent 4 }}
-  readiness-probe.sh: |+
-{{- .Files.Get "scripts/readiness-probe.sh" | nindent 4 }}
+  vip.sh: |+
+{{- .Files.Get "scripts/vip.sh" | nindent 4 }}
 {{- end }}

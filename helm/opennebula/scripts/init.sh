@@ -244,11 +244,12 @@ perform_bootstrap() {
     info "starting bootstrap procedure"
   fi
 
-  LEADER_SVC=${LEADER_SVC:-opennebula-oned-leader}
+  LEADER_SVC=${LEADER_SVC:-$(hostname -d | awk -F. '{print $1}' | sed 's/-servers$/-headless/')}
   info "resolving $LEADER_SVC"
   LEADER_OUT=$(getent hosts "$LEADER_SVC")
   LEADER_IP=$(echo "$LEADER_OUT" | awk 'NR=1 {print $1}')
   LEADER_DOMAIN=$(echo "$LEADER_OUT" | awk 'NR=1 {print $2}' | awk -F. '{print $3}')
+  LEADER_COUNT=$(echo "$LEADER_IP" | wc -l)
 
   LEADER_XMLRPC="http://${LEADER_IP}:${ONE_PORT}/RPC2"
   MY_XMLRPC="http://$(hostname -f | cut -d. -f-2):${ONE_PORT}/RPC2"
@@ -294,7 +295,7 @@ perform_bootstrap() {
       info "setting serveradmin password"
       SERVERADMIN_PASSWORD_FILE=$(mktemp)
       cat /secrets/sunstone_auth | cut -d: -f2 > "$SERVERADMIN_PASSWORD_FILE"
-      oneuser passwd 1 --sha1 -r "$SERVERADMIN_PASSWORD_FILE"
+      oneuser passwd 1 --sha256 -r "$SERVERADMIN_PASSWORD_FILE"
       if [ $? -ne 0 ]; then
         fatal "error setting serveradmin password"
       fi
@@ -313,8 +314,10 @@ perform_bootstrap() {
       perform_bootstrap
       return 0
     fi
+  elif [ "$LEADER_COUNT" != "1" ]; then
+    fatal "multiple leaders found: $(echo $LEADER_IP | tr '\n' ' ')"
   elif [ "$LEADER_DOMAIN" != "svc" ]; then
-    fatal "$LEADER_SVC is not a service"
+    fatal "$LEADER_SVC is not a kubernetes service"
   fi
  
   info "leader found. ($LEADER_IP)"
