@@ -125,6 +125,9 @@ RUN sed -i 's|^\(SUNSTONE_LOG *=\).*|\1 "/dev/stdout"|' /usr/lib/one/sunstone/su
  && sed -i 's|^\(VNC_LOG *=\).*|\1 "/dev/stdout"|' /usr/bin/novnc-server \
  && sed -i '/cmd *=/a\        exec(cmd)' /usr/lib/one/ruby/OpenNebulaVNC.rb
 
+# remove vcenter routes
+RUN sed -i '/- vcenter\|- nsx/d' /etc/one/sunstone-server.conf
+
 USER oneadmin
 ENTRYPOINT [ "/usr/bin/ruby", "/usr/lib/one/sunstone/sunstone-server.rb" ]
 #ENTRYPOINT [ "/usr/bin/ruby", "/usr/bin/novnc-server", "start" ]
