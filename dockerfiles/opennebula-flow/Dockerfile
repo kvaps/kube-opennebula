@@ -29,8 +29,9 @@ RUN wget -q -O - https://github.com/OpenNebula/one/archive/release-$VERSION.tar.
 WORKDIR /opennebula-$VERSION
 
 # Apply patches
-RUN wget -q -O - https://patch-diff.githubusercontent.com/raw/OpenNebula/one/pull/3569.diff | patch -p1 \
- && wget -q -O - https://patch-diff.githubusercontent.com/raw/OpenNebula/one/pull/4141.diff | patch -p1
+RUN wget -q -O - https://github.com/OpenNebula/one/pull/3569.diff | patch -p1 \
+ && wget -q -O - https://github.com/OpenNebula/one/pull/4141.diff | patch -p1 \
+ && wget -q -O - https://github.com/OpenNebula/one/pull/4155.diff | patch -p1
 
 # Build docs
 RUN cd share/man \
