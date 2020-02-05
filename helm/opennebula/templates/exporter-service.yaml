@@ -1,0 +1,24 @@
+{{- if .Values.exporter.enabled }}
+{{- $fullName := include "opennebula.fullname" . -}}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $fullName }}-exporter
+  labels:
+    app: {{ $fullName }}-exporter
+    {{- if .Values.exporter.service.labels }}
+    {{- toYaml .Values.exporter.service.labels | nindent 4 }}
+    {{- end }}
+  {{- with .Values.exporter.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  ports:
+  - name: http
+    port: {{ .Values.flow.service.port }}
+  selector:
+    app: {{ $fullName }}-exporter
+  type: ClusterIP
+{{- end }}

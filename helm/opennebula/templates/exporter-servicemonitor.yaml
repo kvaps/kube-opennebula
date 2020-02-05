@@ -1,0 +1,29 @@
+{{- if and .Values.exporter.enabled .Values.exporter.serviceMonitor.enabled }}
+{{- $fullName := include "opennebula.fullname" . -}}
+{{- $servicePort := .Values.exporter.service.port -}}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ $fullName }}-exporter
+  labels:
+    app: {{ $fullName }}-exporter
+    {{- if .Values.exporter.serviceMonitor.labels }}
+    {{- toYaml .Values.exporter.serviceMonitor.labels | nindent 4 }}
+    {{- end }}
+  {{- with .Values.exporter.serviceMonitor.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  endpoints:
+  - interval: {{ .Values.exporter.serviceMonitor.interval }}
+    path: {{ .Values.exporter.telemetryPath }}
+    port: http
+  selector:
+    matchLabels:
+      app: {{ $fullName }}-exporter
+      {{- if .Values.exporter.service.labels }}
+      {{- toYaml .Values.exporter.service.labels | nindent 6 }}
+      {{- end }}
+{{- end }}

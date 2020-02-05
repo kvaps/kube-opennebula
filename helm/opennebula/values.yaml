@@ -380,3 +380,39 @@ flow:
 
   configOverrides:
     :debug_level: 2
+
+# ------------------------------------------------------------------------------
+# OpenNebula exporter configuration
+# ------------------------------------------------------------------------------
+
+exporter:
+  enabled: true
+  labels: {}
+  annotations: {}
+  podLabels: {}
+  podAnnotations: {}
+  replicas: 1
+
+  image:
+    repository: docker.io/kvaps/opennebula-exporter
+    tag: v5.10.1
+    pullPolicy: IfNotPresent
+    pullSecrets:
+      - name: regsecret
+
+  nodeSelector: {}
+  tolerations: []
+
+  port: 9100
+  telemetryPath: /metrics
+  periodSeconds: 60
+  service:
+    labels: {}
+    annotations: {}
+    port: 9100
+
+  serviceMonitor:
+    interval: 30s
+    enabled: true
+    labels: {}
+    annotations: {}

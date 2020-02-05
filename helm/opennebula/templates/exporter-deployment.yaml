@@ -1,68 +1,77 @@
-{{- if .Values.hem.enabled }}
+{{- if .Values.exporter.enabled }}
 {{- $fullName := include "opennebula.fullname" . -}}
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ $fullName }}-hem
+  name: {{ $fullName }}-exporter
   labels:
-    app: {{ $fullName }}-hem
-    {{- if .Values.hem.labels }}
-    {{- toYaml .Values.hem.labels | nindent 4 }}
+    app: {{ $fullName }}-exporter
+    {{- if .Values.exporter.labels }}
+    {{- toYaml .Values.exporter.labels | nindent 4 }}
     {{- end }}
-  {{- with .Values.hem.annotations }}
+  {{- with .Values.exporter.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 
 spec:
-  replicas: {{ .Values.hem.replicas }}
+  replicas: {{ .Values.exporter.replicas }}
   selector:
     matchLabels:
-      app: {{ $fullName }}-hem
+      app: {{ $fullName }}-exporter
   template:
     metadata:
       labels:
-        app: {{ $fullName }}-hem
-        {{- with .Values.hem.podLabels }}
+        app: {{ $fullName }}-exporter
+        {{- with .Values.exporter.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
-      {{- with .Values.hem.podAnnotations }}
+      {{- with .Values.exporter.podAnnotations }}
       annotations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
     spec:
       containers:
-      - name: onehem
-        image: {{ .Values.hem.image.repository }}:{{ .Values.hem.image.tag }}
-        imagePullPolicy: {{ .Values.hem.image.pullPolicy }}
-        command: [ "/usr/bin/ruby", "/usr/lib/one/onehem/onehem-server.rb" ]
+      - name: exporter
+        image: {{ .Values.exporter.image.repository }}:{{ .Values.exporter.image.tag }}
+        imagePullPolicy: {{ .Values.exporter.image.pullPolicy }}
+        args:
+        - --web.telemetry-path={{ .Values.exporter.telemetryPath }}
+        - --web.listen-address=:{{ .Values.exporter.port }}
+        livenessProbe:
+          exec:
+            command:
+            - /bin/bash
+            - -c
+            - "opennebula_exporter > /metrics/opennebula.prom.$$ && mv /metrics/opennebula.prom.$$ /metrics/opennebula.prom"
+          initialDelaySeconds: 5
+          failureThreshold: 1
+          periodSeconds: {{ .Values.exporter.periodSeconds }}
         env:
         - name: ONE_XMLRPC
           value: http://{{ template "opennebula.fullname" . }}-oned:{{ .Values.oned.service.port }}/RPC2
+        ports:
+        - name: http
+          containerPort: {{ .Values.exporter.port }}
         volumeMounts:
         {{- with .Values.timezone }}
         - name: timezone
           mountPath: /etc/localtime
           readOnly: true
         {{- end }}
-        - mountPath: /etc/one/onehem-server.conf
-          name: config
-          subPath: onehem-server.conf
         - name: one-keys
           mountPath: /var/lib/one/.one/one_auth
           subPath: one_auth
-        - name: ssh-keys
-          mountPath: /var/lib/one/.ssh
-      {{- with .Values.hem.image.pullSecrets }}
+      {{- with .Values.exporter.image.pullSecrets }}
       imagePullSecrets:
       {{- toYaml . | nindent 6 }}
       {{- end }}
-      {{- with .Values.hem.nodeSelector }}
+      {{- with .Values.exporter.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.hem.tolerations }}
+      {{- with .Values.exporter.tolerations }}
       tolerations:
       {{- toYaml . | nindent 6 }}
       {{- end }}
@@ -76,13 +85,6 @@ spec:
           path: /usr/share/zoneinfo/{{ . }}
           type: File
       {{- end }}
-      - name: config
-        configMap:
-          name: {{ $fullName }}-hem
-      - name: ssh-keys
-        secret:
-          secretName: {{ $fullName }}-ssh-keys
-          defaultMode: 0400
       - name: one-keys
         secret:
           secretName: {{ $fullName }}-one-keys
