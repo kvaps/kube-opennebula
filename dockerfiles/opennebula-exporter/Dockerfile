@@ -112,7 +112,7 @@ RUN apt-get update \
  && apt-get -y clean
 
 COPY --from=prom/node-exporter:v0.18.1 /bin/node_exporter /bin/node_exporter
-ADD https://raw.githubusercontent.com/kvaps/opennebula-exporter/c7ab3a4d546e795da65e34df10fa83a5268e5e2f/opennebula_exporter /bin/opennebula_exporter
+ADD https://raw.githubusercontent.com/kvaps/opennebula-exporter/7b4c10ec07377d1b4b9094020c856b0b6c0b5c73/opennebula_exporter /bin/opennebula_exporter
 RUN chmod 755 /bin/opennebula_exporter \
  && mkdir -p /metrics \
  && chown oneadmin:oneadmin /metrics
