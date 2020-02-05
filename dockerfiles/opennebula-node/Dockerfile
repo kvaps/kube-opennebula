@@ -109,6 +109,3 @@ RUN apt-get -y update \
  && rm -f /usr/local/bin/systemctl \
  && rm -f /etc/libvirt/qemu/networks/autostart/default.xml \
  && apt-get -y clean
-
-# Fix permissions
-RUN chown -R oneadmin:oneadmin /etc/one
