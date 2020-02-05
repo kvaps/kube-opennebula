@@ -107,9 +107,15 @@ RUN apt-get update \
 # Specific part
 # ------------------------------------------------------------------------------
 
+RUN apt-get update \
+ && apt-get -y install xmlstarlet \
+ && apt-get -y clean
+
 COPY --from=prom/node-exporter:v0.18.1 /bin/node_exporter /bin/node_exporter
 ADD https://raw.githubusercontent.com/kvaps/opennebula-exporter/c7ab3a4d546e795da65e34df10fa83a5268e5e2f/opennebula_exporter /bin/opennebula_exporter
-RUN chmod +x /bin/opennebula_exporter
+RUN chmod 755 /bin/opennebula_exporter \
+ && mkdir -p /metrics \
+ && chown oneadmin:oneadmin /metrics
 
 ENTRYPOINT [ \
   "/bin/node_exporter", \
@@ -143,5 +149,6 @@ ENTRYPOINT [ \
   "--no-collector.uname", \
   "--no-collector.vmstat", \
   "--no-collector.xfs", \
-  "--no-collector.zfs" \
+  "--no-collector.zfs", \
+  "--collector.textfile.directory=/metrics" \
 ]
