@@ -158,7 +158,7 @@ perform_upgrade() {
     return 0
   fi
 
-  NEWER_VERSION=$(echo -e "$LOCAL_VERSION\n$NEW_VERSION" | sort -V | tail-n1)
+  NEWER_VERSION=$(echo -e "$LOCAL_VERSION\n$NEW_VERSION" | sort -V | tail -n1)
 
   if [ "$NEWER_VERSION" = "$LOCAL_VERSION" ]; then
     fatal "Database version $LOCAL_VERSION is higher than $NEW_VERSION."
