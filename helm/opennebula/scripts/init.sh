@@ -244,7 +244,7 @@ perform_bootstrap() {
     info "starting bootstrap procedure"
   fi
 
-  LEADER_SVC=${LEADER_SVC:-opennebula-oned-leader}
+  LEADER_SVC=${LEADER_SVC:-$(hostname -d | awk -F. '{print $1}' | sed 's/-servers$/-leader/')}
   info "resolving $LEADER_SVC"
   LEADER_OUT=$(getent hosts "$LEADER_SVC")
   LEADER_IP=$(echo "$LEADER_OUT" | awk 'NR=1 {print $1}')
