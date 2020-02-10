@@ -29,10 +29,11 @@ spec:
         {{- with .Values.oned.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
-      {{- with .Values.oned.podAnnotations }}
       annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/oned-configmap.yaml") . | sha256sum }}
+        {{- with .Values.oned.podAnnotations }}
         {{- toYaml . | nindent 8 }}
-      {{- end }}
+        {{- end }}
     spec:
       serviceAccountName: {{ $fullName }}-oned
       containers:
@@ -56,13 +57,21 @@ spec:
             secretKeyRef:
               key: mysqlPassword
               name: {{ $fullName }}-db-keys
+        {{- if .Values.oned.db.rootPasswd }}
         - name: MYSQL_ROOT_PASSWORD
           valueFrom:
             secretKeyRef:
               key: mysqlRootPassword
               name: {{ $fullName }}-db-keys
+        {{ else }}
+        - name: MYSQL_ALLOW_EMPTY_PASSWORD
+          value: "yes"
+        {{- end }}
         - name: MYSQL_DATABASE
           value: {{ .Values.oned.db.dbName }}
+        {{- with .Values.oned.extraEnvs }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       {{- end }}
       - name: oned
         image: {{ .Values.oned.image.repository }}:{{ .Values.oned.image.tag }}

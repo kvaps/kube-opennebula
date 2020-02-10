@@ -50,6 +50,7 @@ oned:
   annotations: {}
   podLabels: {}
   podAnnotations: {}
+  extraEnvs: []
 
   replicas: 3
 
@@ -155,6 +156,8 @@ sched:
   annotations: {}
   podLabels: {}
   podAnnotations: {}
+  extraEnvs: []
+
   replicas: 1
 
   image:
@@ -182,6 +185,8 @@ hem:
   annotations: {}
   podLabels: {}
   podAnnotations: {}
+  extraEnvs: []
+
   replicas: 1
 
   image:
@@ -207,6 +212,8 @@ sunstone:
   annotations: {}
   podLabels: {}
   podAnnotations: {}
+  extraEnvs: []
+
   replicas: 3
 
   image:
@@ -249,6 +256,8 @@ novnc:
   annotations: {}
   podLabels: {}
   podAnnotations: {}
+  extraEnvs: []
+
   replicas: 1
 
   image:
@@ -287,6 +296,8 @@ memcached:
   annotations: {}
   podLabels: {}
   podAnnotations: {}
+  extraEnvs: []
+
   replicas: 1
 
   image:
@@ -315,6 +326,8 @@ gate:
   annotations: {}
   podLabels: {}
   podAnnotations: {}
+  extraEnvs: []
+
   replicas: 1
 
   image:
@@ -360,6 +373,8 @@ flow:
   annotations: {}
   podLabels: {}
   podAnnotations: {}
+  extraEnvs: []
+
   replicas: 1
 
   image:
@@ -391,6 +406,8 @@ exporter:
   annotations: {}
   podLabels: {}
   podAnnotations: {}
+  extraEnvs: []
+
   replicas: 1
 
   image:

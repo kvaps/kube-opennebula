@@ -27,10 +27,11 @@ spec:
         {{- with .Values.hem.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
-      {{- with .Values.hem.podAnnotations }}
       annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/hem-configmap.yaml") . | sha256sum }}
+        {{- with .Values.hem.podAnnotations }}
         {{- toYaml . | nindent 8 }}
-      {{- end }}
+        {{- end }}
     spec:
       containers:
       - name: onehem

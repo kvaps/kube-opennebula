@@ -9,10 +9,10 @@ apiVersion: v1
 data:
 
   {{- range $key, $value := . }}
-  {{- if eq (printf "%T" .value) "string" }}
+  {{- if eq (printf "%T" $value) "string" }}
   {{ $key }}: {{ $value | b64enc }}
   {{- else }}
-  {{ $key }}: {{ toYaml $value | b64enc }}
+  {{ $key }}: {{ printf "%s\n" (toYaml $value) | b64enc }}
   {{- end }}
   {{- end }}
 {{- end }}

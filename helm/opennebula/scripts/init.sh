@@ -271,14 +271,16 @@ perform_bootstrap() {
         /var/lib/one/.one/onegate_auth \
         /var/lib/one/.one/sunstone_auth
 
+      setup_logging
       info "starting oned"
-      oned -f 2>/dev/null &
+      oned -f &
 
       sleep 5
       until onezone list >/dev/null 2>&1; do
         if ! kill -0 "$ONED_PID" >/dev/null 2>&1; then
-          info "last 10 lines of oned.log:"
-          tail -n10 /var/log/one/oned.log | sed 's/^/  /'
+          info "printing oned.log:"
+          #sed '1,/Starting OpenNebula/d' /var/log/one/oned.log
+          cat /var/log/one/oned.log
           drop_db
           fatal "oned process is dead"
         fi
@@ -420,10 +422,15 @@ setup_config(){
   fi
 }
 
-# Sets logging to stdout (workaround for https://github.com/OpenNebula/one/issues/3900)
+# Sets up logging to temprorary file
 setup_logging(){
+  rm -f /tmp/oned.log
   touch /tmp/oned.log
   ln -sf /tmp/oned.log /var/log/one/oned.log
+}
+
+# Redirects log to stdout (workaround for https://github.com/OpenNebula/one/issues/3900)
+print_logging(){
   tail -F /tmp/oned.log 2>/dev/null &
   while sleep 3600; do
     echo -n > /tmp/oned.log
@@ -457,6 +464,7 @@ main() {
   setup_config db federation
   setup_keys
   setup_logging
+  print_logging
 
   info "starting opennebula"
   oned -f

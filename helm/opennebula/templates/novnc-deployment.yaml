@@ -27,10 +27,11 @@ spec:
         {{- with .Values.novnc.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
-      {{- with .Values.novnc.podAnnotations }}
       annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/novnc-configmap.yaml") . | sha256sum }}
+        {{- with .Values.novnc.podAnnotations }}
         {{- toYaml . | nindent 8 }}
-      {{- end }}
+        {{- end }}
     spec:
       containers:
       - name: novnc
