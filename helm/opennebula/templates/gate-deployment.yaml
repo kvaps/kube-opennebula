@@ -41,6 +41,10 @@ spec:
         ports:
         - name: http
           containerPort: {{ .Values.gate.port }}
+        {{- with .Values.gate.extraEnvs }}
+        env:
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
         volumeMounts:
         {{- with .Values.timezone }}
         - name: timezone
@@ -53,6 +57,9 @@ spec:
         - mountPath: /var/lib/one/.one/onegate_auth
           name: one-keys
           subPath: onegate_auth
+      {{- with .Values.gate.sidecars }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
       {{- with .Values.gate.image.pullSecrets }}
       imagePullSecrets:
       {{- toYaml . | nindent 6 }}
@@ -81,4 +88,7 @@ spec:
       - name: one-keys
         secret:
           secretName: {{ $fullName }}-one-keys
+      {{- with .Values.gate.extraVolumes }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
 {{- end }}

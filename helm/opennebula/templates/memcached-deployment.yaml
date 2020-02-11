@@ -41,12 +41,19 @@ spec:
         ports:
         - name: memcached
           containerPort: {{ .Values.memcached.port }}
+        {{- with .Values.memcached.extraEnvs }}
+        env:
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
         {{- with .Values.timezone }}
         volumeMounts:
         - name: timezone
           mountPath: /etc/localtime
           readOnly: true
         {{- end }}
+      {{- with .Values.memcached.sidecars }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
       {{- with .Values.memcached.image.pullSecrets }}
       imagePullSecrets:
       {{- toYaml . | nindent 6 }}
@@ -62,11 +69,16 @@ spec:
       securityContext:
         fsGroup: 9869
         runAsUser: 9869
-      {{- with .Values.timezone }}
+      {{- if (or .Values.timezone .Values.memcached.extraVolumes) }}
       volumes:
+      {{- with .Values.timezone }}
       - name: timezone
         hostPath:
           path: /usr/share/zoneinfo/{{ . }}
           type: File
+      {{- end }}
+      {{- with .Values.memcached.extraVolumes }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
       {{- end }}
 {{- end }}

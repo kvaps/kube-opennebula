@@ -45,6 +45,10 @@ spec:
         ports:
         - name: http
           containerPort: {{ .Values.sunstone.port }}
+        {{- with .Values.flow.extraEnvs }}
+        env:
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
         volumeMounts:
         {{- with .Values.timezone }}
         - name: timezone
@@ -72,6 +76,9 @@ spec:
             port: 9869
           initialDelaySeconds: 5
           periodSeconds: 5
+      {{- with .Values.flow.sidecars }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
       {{- with .Values.sunstone.image.pullSecrets }}
       imagePullSecrets:
       {{- toYaml . | nindent 6 }}
@@ -111,4 +118,7 @@ spec:
         {{- else }}
         emptyDir:
         {{- end }}
+      {{- with .Values.sunstone.extraVolumes }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
 {{- end }}

@@ -41,6 +41,9 @@ spec:
         env:
         - name: ONE_XMLRPC
           value: http://{{ template "opennebula.fullname" . }}-oned:{{ .Values.oned.service.port }}/RPC2
+        {{- with .Values.hem.extraEnvs }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
         volumeMounts:
         {{- with .Values.timezone }}
         - name: timezone
@@ -55,6 +58,9 @@ spec:
           subPath: one_auth
         - name: ssh-keys
           mountPath: /var/lib/one/.ssh
+      {{- with .Values.hem.sidecars }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
       {{- with .Values.hem.image.pullSecrets }}
       imagePullSecrets:
       {{- toYaml . | nindent 6 }}
@@ -87,4 +93,7 @@ spec:
       - name: one-keys
         secret:
           secretName: {{ $fullName }}-one-keys
+      {{- with .Values.hem.extraVolumes }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
 {{- end }}

@@ -38,6 +38,10 @@ spec:
         image: {{ .Values.sched.image.repository }}:{{ .Values.sched.image.tag }}
         imagePullPolicy: {{ .Values.sched.image.pullPolicy }}
         command: [ '/usr/bin/mm_sched' ]
+        {{- with .Values.sched.extraEnvs }}
+        env:
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
         volumeMounts:
         {{- with .Values.timezone }}
         - name: timezone
@@ -50,6 +54,9 @@ spec:
         - name: one-keys
           mountPath: /var/lib/one/.one/one_auth
           subPath: one_auth
+      {{- with .Values.sched.sidecars }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
       {{- with .Values.sched.image.pullSecrets }}
       imagePullSecrets:
       {{- toYaml . | nindent 6 }}
@@ -78,4 +85,7 @@ spec:
       - name: one-keys
         secret:
           secretName: {{ $fullName }}-one-keys
+      {{- with .Values.sched.extraVolumes }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
 {{ end }}

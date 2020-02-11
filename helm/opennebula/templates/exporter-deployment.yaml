@@ -63,6 +63,12 @@ spec:
         - name: one-keys
           mountPath: /var/lib/one/.one/one_auth
           subPath: one_auth
+        {{- with .Values.exporter.extraEnvs }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.exporter.sidecars }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
       {{- with .Values.exporter.image.pullSecrets }}
       imagePullSecrets:
       {{- toYaml . | nindent 6 }}
@@ -88,4 +94,7 @@ spec:
       - name: one-keys
         secret:
           secretName: {{ $fullName }}-one-keys
+      {{- with .Values.exporter.extraVolumes }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
 {{- end }}

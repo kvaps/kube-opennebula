@@ -69,7 +69,7 @@ spec:
         {{- end }}
         - name: MYSQL_DATABASE
           value: {{ .Values.oned.db.dbName }}
-        {{- with .Values.oned.extraEnvs }}
+        {{- with .Values.oned.db.extraEnvs }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- end }}
@@ -84,9 +84,9 @@ spec:
           containerPort: {{ .Values.oned.collectd.port }}
           protocol: UDP
         env:
-        {{- if .Values.oned.createCluster }}
+        {{- with .Values.oned.createCluster }}
         - name: CREATE_CLUSTER
-          value: '1'
+          value: '{{ if eq (printf "%T" .) "bool" }}{{ . | ternary 1 0 }}{{ else }}{{ . }}{{ end }}'
         {{- end }}
         - name: LEADER_SVC_NAME
           value: {{ $fullName }}-oned-leader
@@ -104,6 +104,9 @@ spec:
               name: {{ $fullName }}-db-keys
         - name: DB_NAME
           value: {{ .Values.oned.db.dbName }}
+        {{- with .Values.oned.extraEnvs }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
         {{- end }}
         volumeMounts:
         {{- with .Values.timezone }}
@@ -143,6 +146,9 @@ spec:
             - list
           initialDelaySeconds: 5
           periodSeconds: 5
+      {{- with .Values.oned.sidecars }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
 
       terminationGracePeriodSeconds: 30
       {{- with .Values.oned.image.pullSecrets }}
@@ -208,6 +214,10 @@ spec:
         {{- else }}
         emptyDir:
         {{- end }}
+      {{- with .Values.oned.extraVolumes }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+
 
   {{- if and .Values.persistence.data.enabled (not .Values.persistence.data.existingClaim) }}
   volumeClaimTemplates:

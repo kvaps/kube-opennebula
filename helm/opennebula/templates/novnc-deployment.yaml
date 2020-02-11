@@ -41,6 +41,10 @@ spec:
         ports:
         - name: websocket
           containerPort: {{ .Values.novnc.port }}
+        {{- with .Values.novnc.extraEnvs }}
+        env:
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
         volumeMounts:
         {{- with .Values.timezone }}
         - name: timezone
@@ -53,6 +57,9 @@ spec:
         - name: shared
           mountPath: /var/lib/one/sunstone_vnc_tokens
           subPath: sunstone_vnc_tokens
+      {{- with .Values.novnc.sidecars }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
       {{- with .Values.sunstone.image.pullSecrets }}
       imagePullSecrets:
       {{- toYaml . | nindent 6 }}
@@ -89,4 +96,7 @@ spec:
         {{- else }}
         emptyDir:
         {{- end }}
+      {{- with .Values.novnc.extraVolumes }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
 {{- end }}

@@ -41,6 +41,10 @@ spec:
         ports:
         - name: http
           containerPort: {{ .Values.flow.port }}
+        {{- with .Values.flow.extraEnvs }}
+        env:
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
         volumeMounts:
         {{- with .Values.timezone }}
         - name: timezone
@@ -53,6 +57,9 @@ spec:
         - mountPath: /var/lib/one/.one/oneflow_auth
           name: one-keys
           subPath: oneflow_auth
+      {{- with .Values.flow.sidecars }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
       {{- with .Values.flow.image.pullSecrets }}
       imagePullSecrets:
       {{- toYaml . | nindent 6 }}
@@ -81,4 +88,7 @@ spec:
       - name: one-keys
         secret:
           secretName: {{ $fullName }}-one-keys
+      {{- with .Values.flow.extraVolumes }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
 {{- end }}
