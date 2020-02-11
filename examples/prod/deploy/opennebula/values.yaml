@@ -1,0 +1,156 @@
+persistence:
+  data:
+    enabled: true
+    size: 10Gi
+    storageClassName: data-1
+  shared:
+    enabled: true
+    size: 8Gi
+    storageClassName: opennebula-nfs
+
+oned:
+  authConfig:
+    ldap_auth.conf:
+      :order:
+        - server 1
+      server 1:
+        :auth_method: :simple
+        :base: cn=accounts,dc=example,dc=org
+        :group: cn=opennebula-admins,cn=groups,cn=accounts,dc=example,dc=org
+        :group_field: member
+        :host: ipa.example.org
+        :mapping_default: 0
+        :mapping_filename: server1.yaml
+        :mapping_generate: true
+        :mapping_key: GROUP_DN
+        :mapping_timeout: 300
+        :port: 389
+        :rfc2307bis: true
+        :user: uid=opennebula-svc,cn=users,cn=accounts,dc=example,dc=org
+        :user_field: uid
+        :user_group_field: dn
+  collectd:
+    port: 32156
+    service:
+      nodePort: 32156
+  configAppends:
+    DS_MAD_CONF:
+      MARKETPLACE_ACTIONS: export
+      NAME: linstor_un
+      PERSISTENT_ONLY: 'NO'
+    MARKET_MAD_CONF:
+      APP_ACTIONS: monitor
+      NAME: static
+      PUBLIC: 'yes'
+      REQUIRED_ATTRS: ''
+      SUNSTONE_NAME: Statically Generated Marketplace
+    TM_MAD_CONF:
+      ALLOW_ORPHANS: 'yes'
+      CLONE_TARGET: SYSTEM
+      DRIVER: raw
+      DS_MIGRATE: 'YES'
+      LN_TARGET: NONE
+      NAME: linstor_un
+      SHARED: 'YES'
+  configOverrides:
+    AUTH_MAD:
+      AUTHN: ssh,x509,ldap,server_cipher,server_x509
+      EXECUTABLE: one_auth_mad
+    DATASTORE_MAD:
+      ARGUMENTS: -t 15 -d dummy,fs,lvm,ceph,dev,iscsi_libvirt,vcenter,linstor_un
+        -s shared,ssh,ceph,fs_lvm,qcow2,vcenter,linstor_un
+      EXECUTABLE: one_datastore
+    DEFAULT_AUTH: ldap
+    DEFAULT_DEVICE_PREFIX: vd
+    LOG:
+      DEBUG_LEVEL: 2
+      SYSTEM: file
+    MARKET_MAD:
+      ARGUMENTS: -t 15 -m http,s3,one,static
+      EXECUTABLE: one_market
+    RAFT_FOLLOWER_HOOK:
+
+      ARGUMENTS: role follower
+      COMMAND: /scripts/vip.sh
+    RAFT_LEADER_HOOK:
+      ARGUMENTS: role leader
+      COMMAND: /scripts/vip.sh
+    TM_MAD:
+      ARGUMENTS: -t 15 -d dummy,lvm,shared,fs_lvm,qcow2,ssh,ceph,dev,vcenter,iscsi_libvirt,linstor_un
+      EXECUTABLE: one_tm
+    VM_MAD:
+      - ARGUMENTS: -t 15 -r 0 kvm -l save=save_linstor_un,restore=restore_linstor_un
+        DEFAULT: vmm_exec/vmm_exec_kvm.conf
+        EXECUTABLE: one_vmm_exec
+        IMPORTED_VMS_ACTIONS: terminate, terminate-hard, hold, release, suspend,
+          resume, delete, reboot, reboot-hard, resched, unresched, disk-attach,
+          disk-detach, nic-attach, nic-detach, snapshot-create, snapshot-delete
+        KEEP_SNAPSHOTS: 'yes'
+        NAME: kvm
+        SUNSTONE_NAME: KVM
+        TYPE: kvm
+  image:
+    repository: registry.example.org/kube-opennebula/opennebula
+  ingress:
+    annotations:
+      certmanager.k8s.io/cluster-issuer: letsencrypt-prod
+      kubernetes.io/ingress.class: nginx
+    hosts:
+      - opennebula.example.org
+    tls:
+      - hosts:
+          - opennebula.example.org
+        secretName: opennebula-tls
+  oneKey: LQpqSYmP2zHfikE8lKPa5HS2new6dLZE
+  oneadminPasswd: mUeXTOpQPtNQ8Hb1MzkYBUMVAHW8F5kz
+  serveradminPasswd: NYvnTQRTps2zqUYdSCKbIYeGUpHHfPwL
+
+sched:
+  image:
+    repository: registry.example.org/kube-opennebula/opennebula
+
+hem:
+  image:
+    repository: registry.example.org/kube-opennebula/opennebula
+
+sunstone:
+  image:
+    repository: registry.example.org/kube-opennebula/opennebula-sunstone
+  ingress:
+    annotations:
+      certmanager.k8s.io/cluster-issuer: letsencrypt-prod
+      kubernetes.io/ingress.class: nginx
+    hosts:
+      - opennebula.example.org
+    tls:
+      - hosts:
+          - opennebula.example.org
+        secretName: opennebula-tls
+
+gate:
+  ingress:
+    annotations:
+      certmanager.k8s.io/cluster-issuer: letsencrypt-prod
+      kubernetes.io/ingress.class: nginx
+    hosts:
+      - gate.opennebula.example.org
+    tls:
+      - hosts:
+          - gate.opennebula.example.org
+        secretName: opennebula-gate-tls
+
+novnc:
+  image:
+    repository: registry.example.org/kube-opennebula/opennebula-sunstone
+  ingress:
+    annotations:
+      certmanager.k8s.io/cluster-issuer: letsencrypt-prod
+      kubernetes.io/ingress.class: nginx
+    hosts:
+      - opennebula.example.org
+    tls:
+      - hosts:
+          - opennebula.example.org
+        secretName: opennebula-tls
+
+

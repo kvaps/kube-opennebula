@@ -1,0 +1,11 @@
+export LANG=C
+export LIBVIRT_URI=qemu:///system
+export LIBVIRT_MD_URI=http://opennebula.org/xmlns/libvirt/1.0
+export LIBVIRT_MD_KEY=one
+export SHUTDOWN_TIMEOUT=300
+export VIRSH_RETRIES=3
+export SYNC_TIME=no
+export QEMU_PROTOCOL=qemu+ssh
+export SHUTDOWN_TIMEOUT=300
+export COMPACT_MEMORY=yes
+MIGRATE_OPTIONS=--unsafe

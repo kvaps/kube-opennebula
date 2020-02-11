@@ -6,13 +6,14 @@ metadata:
   name: {{ $fullName }}-shared
   labels:
     app: {{ $fullName }}-shared
-  {{- with .Values.persistence.shared.annotations  }}
   annotations:
-{{ toYaml . | indent 4 }}
-  {{- end }}
+    helm.sh/resource-policy: "keep"
+    {{- with .Values.persistence.shared.annotations  }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
   {{- with .Values.persistence.shared.finalizers  }}
   finalizers:
-{{ toYaml . | indent 4 }}
+    {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
   accessModes:
