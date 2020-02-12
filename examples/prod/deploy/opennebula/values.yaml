@@ -126,6 +126,9 @@ sunstone:
       - hosts:
           - opennebula.example.org
         secretName: opennebula-tls
+  configOverrides:
+    :routes: 
+      - oneflow
 
 gate:
   ingress:
