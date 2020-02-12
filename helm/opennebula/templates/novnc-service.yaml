@@ -17,7 +17,7 @@ metadata:
 spec:
   ports:
   - name: websocket
-    port: {{ .Values.flow.service.port }}
+    port: {{ .Values.novnc.service.port }}
   selector:
     app: {{ $fullName }}-novnc
   type: ClusterIP

@@ -127,6 +127,8 @@ sunstone:
           - opennebula.example.org
         secretName: opennebula-tls
   configOverrides:
+    :vnc_client_port: 443/websockify
+    :vnc_proxy_support_wss: only
     :routes: 
       - oneflow
 

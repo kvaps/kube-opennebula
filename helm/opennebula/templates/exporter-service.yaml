@@ -17,7 +17,7 @@ metadata:
 spec:
   ports:
   - name: http
-    port: {{ .Values.flow.service.port }}
+    port: {{ .Values.exporter.service.port }}
   selector:
     app: {{ $fullName }}-exporter
   type: ClusterIP

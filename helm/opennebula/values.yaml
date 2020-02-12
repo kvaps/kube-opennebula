@@ -254,6 +254,8 @@ sunstone:
 
   configOverrides:
     :debug_level: 3
+    :vnc_client_port: 443/websockify
+    :vnc_proxy_support_wss: only
 
 # ------------------------------------------------------------------------------
 # NoVNC server configuration
