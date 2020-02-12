@@ -98,7 +98,7 @@ oned:
 
     image:
       repository: docker.io/library/mysql
-      tag: 8.0.18
+      tag: 8.0.19
       pullPolicy: IfNotPresent
 
   # Specify nodePort for collectd service (30000-32767)
