@@ -7,7 +7,7 @@
 FROM ubuntu:18.04 as builder
 
 # Setup environment variables
-ENV VERSION=5.10.1 \
+ENV VERSION=5.10.2 \
     PKG_VERSION=1 \
     CONTACT="Unsupported Community Build" \
     GIT_VERSION="not known" \
@@ -29,9 +29,7 @@ RUN wget -q -O - https://github.com/OpenNebula/one/archive/release-$VERSION.tar.
 WORKDIR /opennebula-$VERSION
 
 # Apply patches
-RUN wget -q -O - https://github.com/OpenNebula/one/pull/3569.diff | patch -p1 \
- && wget -q -O - https://github.com/OpenNebula/one/pull/4141.diff | patch -p1 \
- && wget -q -O - https://github.com/OpenNebula/one/pull/4155.diff | patch -p1
+RUN wget -q -O - https://github.com/OpenNebula/one/pull/3569.diff | patch -p1
 
 # Build docs
 RUN cd share/man \
