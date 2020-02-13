@@ -9,6 +9,21 @@ persistence:
     storageClassName: opennebula-nfs
 
 oned:
+  image:
+    repository: registry.example.org/kube-opennebula/opennebula
+
+  ingress:
+    annotations:
+      certmanager.k8s.io/cluster-issuer: letsencrypt-prod
+      kubernetes.io/ingress.class: nginx
+    hosts:
+      - opennebula.example.org
+    tls:
+      - hosts:
+          - opennebula.example.org
+        secretName: opennebula-tls
+
+
   authConfig:
     ldap_auth.conf:
       :order:
@@ -89,21 +104,6 @@ oned:
         NAME: kvm
         SUNSTONE_NAME: KVM
         TYPE: kvm
-  image:
-    repository: registry.example.org/kube-opennebula/opennebula
-  ingress:
-    annotations:
-      certmanager.k8s.io/cluster-issuer: letsencrypt-prod
-      kubernetes.io/ingress.class: nginx
-    hosts:
-      - opennebula.example.org
-    tls:
-      - hosts:
-          - opennebula.example.org
-        secretName: opennebula-tls
-  oneKey: LQpqSYmP2zHfikE8lKPa5HS2new6dLZE
-  oneadminPasswd: mUeXTOpQPtNQ8Hb1MzkYBUMVAHW8F5kz
-  serveradminPasswd: NYvnTQRTps2zqUYdSCKbIYeGUpHHfPwL
 
 sched:
   image:

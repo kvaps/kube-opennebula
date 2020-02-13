@@ -91,7 +91,7 @@ oned:
     server: 127.0.0.1
     port: 3306
     user: oneadmin
-    passwd: oneadmin
+    passwd:
     dbName: opennebula
     connections: 50
     rootPasswd:
@@ -298,6 +298,9 @@ novnc:
     - secretName: opennebula-tls
       hosts:
       - opennebula.example.org
+
+  configOverrides:
+    :debug_level: 3
 
 # ------------------------------------------------------------------------------
 # Memcached server configuration

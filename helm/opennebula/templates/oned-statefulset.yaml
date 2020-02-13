@@ -58,16 +58,11 @@ spec:
             secretKeyRef:
               key: mysqlPassword
               name: {{ $fullName }}-db-keys
-        {{- if .Values.oned.db.rootPasswd }}
         - name: MYSQL_ROOT_PASSWORD
           valueFrom:
             secretKeyRef:
               key: mysqlRootPassword
               name: {{ $fullName }}-db-keys
-        {{ else }}
-        - name: MYSQL_ALLOW_EMPTY_PASSWORD
-          value: "yes"
-        {{- end }}
         - name: MYSQL_DATABASE
           value: {{ .Values.oned.db.dbName }}
         {{- with .Values.oned.db.extraEnvs }}
