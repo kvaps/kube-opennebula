@@ -41,15 +41,20 @@ spec:
         ports:
         - name: memcached
           containerPort: {{ .Values.memcached.port }}
-        {{- with .Values.memcached.extraEnvs }}
+        {{- with .Values.memcached.extraEnv }}
         env:
         {{- toYaml . | nindent 8 }}
         {{- end }}
-        {{- with .Values.timezone }}
+        {{- if (or .Values.timezone .Values.memcached.extraVolumeMounts) }}
         volumeMounts:
+        {{- with .Values.timezone }}
         - name: timezone
           mountPath: /etc/localtime
           readOnly: true
+        {{- end }}
+        {{- with .Values.memcached.extraVolumeMounts }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
         {{- end }}
       {{- with .Values.memcached.sidecars }}
       {{- toYaml . | nindent 6 }}

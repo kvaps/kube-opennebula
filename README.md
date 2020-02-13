@@ -45,7 +45,7 @@ Helm chart and OpenNebula images ready to deploy on Kubernetes
 
 Sometimes you need to perform some customization, eg. update sunstone views and addtitional drivers, etc.
 
-All these customizations should be done by updating dockerimages, you can find some examples [here](examples/prod/dockerfiles)
+All these customizations could be done by updating dockerimages, you can find some examples [here](examples/prod/dockerfiles), or by simple using `extraVolumes` and `extraVolumeMounts` in chart values.
 
 ## Production setup
 

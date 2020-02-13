@@ -41,7 +41,7 @@ spec:
         ports:
         - name: websocket
           containerPort: {{ .Values.novnc.port }}
-        {{- with .Values.novnc.extraEnvs }}
+        {{- with .Values.novnc.extraEnv }}
         env:
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -57,6 +57,9 @@ spec:
         - name: shared
           mountPath: /var/lib/one/sunstone_vnc_tokens
           subPath: sunstone_vnc_tokens
+        {{- with .Values.novnc.extraVolumeMounts }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       {{- with .Values.novnc.sidecars }}
       {{- toYaml . | nindent 6 }}
       {{- end }}

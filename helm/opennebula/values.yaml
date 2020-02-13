@@ -50,9 +50,10 @@ oned:
   annotations: {}
   podLabels: {}
   podAnnotations: {}
-  extraEnvs: []
+  extraEnv: []
   sidecars: []
   extraVolumes: []
+  extraVolumeMounts: []
 
   replicas: 3
 
@@ -85,7 +86,8 @@ oned:
 
   # Database configuration
   db:
-    extraEnvs: []
+    extraEnv: []
+    extraVolumeMounts: []
     enabled: true
     backend: mysql
     server: 127.0.0.1
@@ -159,9 +161,10 @@ sched:
   annotations: {}
   podLabels: {}
   podAnnotations: {}
-  extraEnvs: []
+  extraEnv: []
   sidecars: []
   extraVolumes: []
+  extraVolumeMounts: []
 
   replicas: 1
 
@@ -190,9 +193,10 @@ hem:
   annotations: {}
   podLabels: {}
   podAnnotations: {}
-  extraEnvs: []
+  extraEnv: []
   sidecars: []
   extraVolumes: []
+  extraVolumeMounts: []
 
   replicas: 1
 
@@ -219,9 +223,10 @@ sunstone:
   annotations: {}
   podLabels: {}
   podAnnotations: {}
-  extraEnvs: []
+  extraEnv: []
   sidecars: []
   extraVolumes: []
+  extraVolumeMounts: []
 
   replicas: 3
 
@@ -267,9 +272,10 @@ novnc:
   annotations: {}
   podLabels: {}
   podAnnotations: {}
-  extraEnvs: []
+  extraEnv: []
   sidecars: []
   extraVolumes: []
+  extraVolumeMounts: []
 
   replicas: 1
 
@@ -312,9 +318,10 @@ memcached:
   annotations: {}
   podLabels: {}
   podAnnotations: {}
-  extraEnvs: []
+  extraEnv: []
   sidecars: []
   extraVolumes: []
+  extraVolumeMounts: []
 
   replicas: 1
 
@@ -344,9 +351,10 @@ gate:
   annotations: {}
   podLabels: {}
   podAnnotations: {}
-  extraEnvs: []
+  extraEnv: []
   sidecars: []
   extraVolumes: []
+  extraVolumeMounts: []
 
   replicas: 1
 
@@ -393,9 +401,10 @@ flow:
   annotations: {}
   podLabels: {}
   podAnnotations: {}
-  extraEnvs: []
+  extraEnv: []
   sidecars: []
   extraVolumes: []
+  extraVolumeMounts: []
 
   replicas: 1
 
@@ -428,9 +437,10 @@ exporter:
   annotations: {}
   podLabels: {}
   podAnnotations: {}
-  extraEnvs: []
+  extraEnv: []
   sidecars: []
   extraVolumes: []
+  extraVolumeMounts: []
 
   replicas: 1
 

@@ -38,7 +38,7 @@ spec:
         image: {{ .Values.sched.image.repository }}:{{ .Values.sched.image.tag }}
         imagePullPolicy: {{ .Values.sched.image.pullPolicy }}
         command: [ '/usr/bin/mm_sched' ]
-        {{- with .Values.sched.extraEnvs }}
+        {{- with .Values.sched.extraEnv }}
         env:
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -54,6 +54,9 @@ spec:
         - name: one-keys
           mountPath: /var/lib/one/.one/one_auth
           subPath: one_auth
+        {{- with .Values.extraVolumeMounts }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       {{- with .Values.sched.sidecars }}
       {{- toYaml . | nindent 6 }}
       {{- end }}

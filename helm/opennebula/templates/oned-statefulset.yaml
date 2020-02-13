@@ -50,6 +50,9 @@ spec:
         {{- end }}
         - name: data
           mountPath: /var/lib/mysql
+        {{- with .Values.oned.db.extraVolumeMounts }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
         env:
         - name: MYSQL_USER
           value: {{ .Values.oned.db.user }}
@@ -65,7 +68,7 @@ spec:
               name: {{ $fullName }}-db-keys
         - name: MYSQL_DATABASE
           value: {{ .Values.oned.db.dbName }}
-        {{- with .Values.oned.db.extraEnvs }}
+        {{- with .Values.oned.db.extraEnv }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- end }}
@@ -100,7 +103,7 @@ spec:
               name: {{ $fullName }}-db-keys
         - name: DB_NAME
           value: {{ .Values.oned.db.dbName }}
-        {{- with .Values.oned.extraEnvs }}
+        {{- with .Values.oned.extraEnv }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
         {{- end }}
@@ -134,6 +137,9 @@ spec:
         {{- if eq .Values.oned.db.backend "sqlite" }}
         - name: data
           mountPath: /data
+        {{- end }}
+        {{- with .Values.oned.extraVolumeMounts }}
+        {{- toYaml . | nindent 8 }}
         {{- end }}
         readinessProbe:
           exec:
