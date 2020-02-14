@@ -1,6 +1,8 @@
 {{- if .Values.oned.enabled }}
 {{- $fullName := include "opennebula.fullname" . -}}
 {{- $servicePort := .Values.oned.service.port -}}
+{{- $hmSubscriberServicePort := .Values.oned.one_hm.service.subscriberPort -}}
+{{- $hmReplierServicePort := .Values.oned.one_hm.service.replierPort -}}
 ---
 apiVersion: v1
 kind: Service
@@ -21,6 +23,10 @@ spec:
   ports:
   - name: http
     port: {{ $servicePort }}
+  - name: hm-subscriber
+    port: {{ $hmSubscriberServicePort }}
+  - name: hm-replier
+    port: {{ $hmReplierServicePort }}
   selector:
     app: {{ $fullName }}-oned
   type: ClusterIP
@@ -43,6 +49,10 @@ spec:
   ports:
   - name: http
     port: {{ $servicePort }}
+  - name: hm-subscriber
+    port: {{ $hmSubscriberServicePort }}
+  - name: hm-replier
+    port: {{ $hmReplierServicePort }}
   selector:
     app: {{ $fullName }}-oned
     role: leader
@@ -65,6 +75,10 @@ spec:
   ports:
   - name: http
     port: {{ $servicePort }}
+  - name: hm-subscriber
+    port: {{ $hmSubscriberServicePort }}
+  - name: hm-replier
+    port: {{ $hmReplierServicePort }}
   selector:
     app: {{ $fullName }}-oned
     role: leader

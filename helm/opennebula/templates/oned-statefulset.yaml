@@ -80,6 +80,10 @@ spec:
         ports:
         - name: http
           containerPort: {{ .Values.oned.port }}
+        - name: hm-subscriber
+          containerPort: {{ .Values.oned.one_hm.subscriberPort }}
+        - name: hm-replier
+          containerPort: {{ .Values.oned.one_hm.replierPort }}
         - name: collectd
           containerPort: {{ .Values.oned.collectd.port }}
           protocol: UDP
