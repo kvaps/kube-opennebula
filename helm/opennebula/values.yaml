@@ -58,7 +58,9 @@ oned:
   replicas: 3
 
   # Allow to bootsrap new cluster
-  #createCluster: 1
+  createCluster: false
+  # Enable debug mode
+  debug: false
 
   image:
     repository: docker.io/kvaps/opennebula

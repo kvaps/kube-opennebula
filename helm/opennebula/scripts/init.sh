@@ -437,37 +437,134 @@ print_logging(){
   done &
 }
 
-main() {
+# Prints usage and exit
+usage() {
+  cat <<EOT
+
+USAGE:
+  $0 <action>
+
+ACTIONS:
+  config [db] [federation]     Setup oned.conf and keys
+  bootstrap                    Perform the bootstrap procedure
+  upgrade                      Perform the upgrade procedure
+  start                        Setup oned.conf and keys, perform bootstrap (or upgrade) and then start oned
+  debug                        Setup oned.conf and keys, then do nothing
+
+OPTIONS:
+  --create-cluster             Allow to bootstrap new cluster
+  --solo                       Set server_id to -1 (solo mode)
+
+EOT
+  exit 1
+}
+
+# Loads vars and defaults
+init() {
   trap cleanup EXIT
   info "initializing"
   load_db_config
+  load_federation_config
+  load_version_info
+
+  # Setup sqlite path
   if [ "$DB_BACKEND" = "sqlite" ]; then
     ln -sf /data/one.db /var/lib/one/one.db
   fi
 
-  load_federation_config
-  load_version_info
-  load_my_id
+  setup_keys
 
   # Override SERVER_ID by MY_ID
-  FEDERATION_SERVER_ID="$MY_ID"
-
-  setup_keys
-  setup_config db
-
-  if [ -n "$LOCAL_VERSION" ]; then
-    perform_upgrade
+  if [ "${SOLO:-0}" = "1" ]; then
+    FEDERATION_SERVER_ID="-1"
   else
-    perform_bootstrap
+    load_my_id
+    FEDERATION_SERVER_ID="$MY_ID"
   fi
 
-  setup_config db federation
-  setup_keys
-  setup_logging
-  print_logging
-
-  info "starting opennebula"
-  oned -f
 }
 
-main
+load_keys() {
+  CREATE_CLUSTER=0
+  SOLO=0
+  while [ $# -gt 0 ]; do
+    case $1 in
+    --create-cluster)
+      CREATE_CLUSTER="1"
+      shift
+      ;;
+    --solo)
+      SOLO="1"
+      shift
+      ;;
+    --*)
+      usage
+      ;;
+    *)
+      if [ -n "$ACTION" ]; then
+        if [ "$ACTION" = "config" ]; then
+          EXTRA_ARGS="$1"
+          shift
+          continue
+        else
+          usage
+        fi
+      fi
+      ACTION="$1"
+      shift
+      ;;
+    esac
+  done
+  if [ -z "$ACTION" ]; then
+    usage
+  fi
+}
+
+main() {
+  load_keys "$@"
+  case $ACTION in
+    config)
+      init
+      setup_config "$EXTRA_ARGS"
+      exit $?
+      ;;
+    upgrade)
+      init
+      setup_config db federation
+      perform_upgrade
+      ;;
+    bootstrap)
+      init
+      setup_config db
+      perform_bootstrap
+      setup_config db federation
+      ;;
+    start)
+      init
+      if [ -n "$LOCAL_VERSION" ]; then
+        setup_config db federation
+        perform_upgrade
+      else
+        setup_config db
+        perform_bootstrap
+        setup_keys
+        setup_config db federation
+      fi
+      setup_logging
+      print_logging
+      info "starting opennebula"
+      oned -f
+      ;;
+    debug)
+      init
+      setup_config db federation
+      info "doing nothing (debug mode requested)"
+      sleep infinity
+      ;;
+    *)
+      fatal "wrong action $ACTION"
+      ;;
+  esac
+}
+
+main "$@"

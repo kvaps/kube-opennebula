@@ -76,6 +76,7 @@ spec:
         image: {{ .Values.oned.image.repository }}:{{ .Values.oned.image.tag }}
         imagePullPolicy: {{ .Values.oned.image.pullPolicy }}
         command: [ '/scripts/init.sh' ]
+        args: [ '{{ if .Values.oned.debug }}debug{{ else }}start{{ end }}' ]
         ports:
         - name: http
           containerPort: {{ .Values.oned.port }}
