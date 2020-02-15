@@ -254,7 +254,6 @@ perform_bootstrap() {
   LEADER_XMLRPC="http://${LEADER_IP}:${ONE_PORT}/RPC2"
   MY_XMLRPC="http://$(hostname -f | cut -d. -f-2):${ONE_PORT}/RPC2"
 
-  
   if [ "$FEDERATION_SERVER_ID" -ne "0" ] && [ "$DB_BACKEND" != 'mysql' ]; then
     fatal "Only mysql backend support joining multiple instances"
   fi
@@ -274,12 +273,12 @@ perform_bootstrap() {
       setup_logging
       info "starting oned"
       oned -f &
+      ONED_PID="$!"
 
       sleep 5
       until onezone list >/dev/null 2>&1; do
         if ! kill -0 "$ONED_PID" >/dev/null 2>&1; then
           info "printing oned.log:"
-          #sed '1,/Starting OpenNebula/d' /var/log/one/oned.log
           cat /var/log/one/oned.log
           drop_db
           fatal "oned process is dead"
@@ -373,7 +372,7 @@ inject_db_config() {
   fi
 
   awk -v RS='\n[^#\n]*DB = \\[[^]]*]' \
-    -v ORS= '1;NR==1{printf "\nDB = [ BACKEND = \"'"$DB_BACKEND"'\",\n       SERVER  = \"'"$DB_SERVER"'\",\n       PORT    = '"$DB_PORT"',\n       USER    = \"'"$DB_USER"'\",\n       PASSWD  = \"'"$DB_PASSWD"'\",\n       DB_NAME = \"'"$DB_NAME"'\",\n       CONNECTIONS = '"$DB_CONNECTIONS"' ]"}' 
+    -v ORS= '1;NR==1{printf "\nDB = [ BACKEND = \"'"${DB_BACKEND}\\\"${DB_SERVER:+,\n       SERVER  = \\\"${DB_SERVER}\\\"}${DB_PORT:+,\n       PORT    = ${DB_PORT}}${DB_USER:+,\n       USER    = \\\"${DB_USER}\\\"}${DB_PASSWD:+,\n       PASSWD  = \\\"${DB_PASSWD}\\\"}${DB_NAME:+,\n       DB_NAME = \\\"${DB_NAME}\\\"}${DB_CONNECTIONS:+,\n       CONNECTIONS = ${DB_CONNECTIONS}}${DB_ENCODING:+,\n       ENCODING = \\\"${DB_ENCODING}\\\"}"'\n]"}'
 }
 
 # Injects federation config into streamed oned.conf file
@@ -412,7 +411,7 @@ setup_keys(){
 
 # Setups oned.conf and runs injectiors from the argumets
 setup_config(){
-  info "setup oned.conf"
+  info "setup oned.conf ${*:+[$*]}"
   for i in "$@"; do
     local INJECT_FUNCTIONS+=" | inject_${i}_config"
   done
@@ -485,8 +484,6 @@ init() {
 }
 
 load_keys() {
-  CREATE_CLUSTER=0
-  SOLO=0
   while [ $# -gt 0 ]; do
     case $1 in
     --create-cluster)
@@ -503,7 +500,7 @@ load_keys() {
     *)
       if [ -n "$ACTION" ]; then
         if [ "$ACTION" = "config" ]; then
-          EXTRA_ARGS="$1"
+          EXTRA_ARGS+=" $1"
           shift
           continue
         else
@@ -525,7 +522,7 @@ main() {
   case $ACTION in
     config)
       init
-      setup_config "$EXTRA_ARGS"
+      setup_config $EXTRA_ARGS
       exit $?
       ;;
     upgrade)
