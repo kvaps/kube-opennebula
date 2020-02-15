@@ -118,7 +118,7 @@ load_version_info() {
 
       RETRY=1
       until DB_TABLES="$(mysql --defaults-file="$MYSQL_OPTS" -u "$DB_USER" -h "$DB_SERVER" -P "$DB_PORT" "$DB_NAME" -N -B -e "SHOW TABLES like 'local_db_versioning'" 2>/dev/null)"; do
-        info "can not connect to mysql database mysql://$DB_USER@$DB_SERVER:$DB_PORT/$DB_NAME (retry $((RETRY++)))"
+        info "can not connect to mysql database mysql://$DB_USER@$DB_SERVER:$DB_PORT/$DB_NAME (try $((RETRY++)))"
         sleep 10
       done
       unset RETRY
@@ -223,7 +223,147 @@ drop_db(){
   esac
 }
 
-# Bootstraps new node
+# Creates new cluster
+bootstrap_cluster(){
+   rm -f \
+     /var/lib/one/.one/ec2_auth \
+     /var/lib/one/.one/occi_auth \
+     /var/lib/one/.one/oneflow_auth \
+     /var/lib/one/.one/onegate_auth \
+     /var/lib/one/.one/sunstone_auth
+
+   setup_logging
+   info "starting oned"
+   oned -f &
+   ONED_PID="$!"
+
+   sleep 5
+   until onezone list >/dev/null 2>&1; do
+     if ! kill -0 "$ONED_PID" >/dev/null 2>&1; then
+       info "printing oned.log:"
+       cat /var/log/one/oned.log
+       drop_db
+       fatal "oned process is dead"
+     fi
+     info "oned is not ready. waiting 5 sec"
+     sleep 5
+   done
+
+   info "adding $HOSTNAME to zone $FEDERATION_ZONE_ID"
+   onezone server-add "$FEDERATION_ZONE_ID" --name "$HOSTNAME" --rpc "$MY_XMLRPC"
+   if [ $? -ne 0 ]; then
+     fatal "error adding $HOSTNAME to zone $FEDERATION_ZONE_ID"
+   fi
+
+   info "setting serveradmin password"
+   SERVERADMIN_PASSWORD_FILE=$(mktemp)
+   cat /secrets/sunstone_auth | cut -d: -f2 > "$SERVERADMIN_PASSWORD_FILE"
+   oneuser passwd 1 --sha256 -r "$SERVERADMIN_PASSWORD_FILE"
+   if [ $? -ne 0 ]; then
+     fatal "error setting serveradmin password"
+   fi
+   rm -f "$SERVERADMIN_PASSWORD_FILE"
+
+   info 'stopping oned'
+   cleanup
+   info 'oned stopped'
+
+   info "bootstrap procedure finished"
+}
+
+# Joining node to the existing cluster
+bootstrap_node(){
+  info "checking connection"
+  ONE_XMLRPC="$LEADER_XMLRPC" onezone show "$FEDERATION_ZONE_ID" >/dev/null
+  if [ $? -ne 0 ]; then
+    fatal "can not get zone $FEDERATION_ZONE_ID from $LEADER_XMLRPC"
+  fi
+
+  wait_previous_host
+  wait_leader
+
+  info "downloading data from mysql://$DB_USER@$LEADER_IP:$DB_PORT/$DB_NAME"
+  MYSQL_OPTS=$(mktemp)
+  echo -e "[client]\npassword=$DB_PASSWD" > "$MYSQL_OPTS"
+  mysqldump --defaults-file="$MYSQL_OPTS" -u "$DB_USER" -h "$LEADER_IP" -P "$DB_PORT" "$DB_NAME" | \
+    mysql --defaults-file="$MYSQL_OPTS" -u "$DB_USER" -h "$DB_SERVER" -P "$DB_PORT" "$DB_NAME"
+  if [ $? -ne 0 ]; then
+    fatal "can not bootstrap database"
+  else
+    info "database succesfully bootstraped"
+  fi
+  rm -f "$MYSQL_OPTS"
+
+  if [ -n "$(ONE_XMLRPC="$LEADER_XMLRPC" onezone show "$FEDERATION_ZONE_ID" -x | /var/lib/one/remotes/datastore/xpath.rb "/ZONE/SERVER_POOL/SERVER[NAME=\"$HOSTNAME\"]/NAME)" | tr -d '\0')" ]; then
+    info "$HOSTNAME already member of zone $FEDERATION_ZONE_ID"
+  else
+    info "adding $HOSTNAME to zone $FEDERATION_ZONE_ID via $LEADER_XMLRPC"
+    MY_XMLRPC="http://$(hostname -f | cut -d. -f-2):${ONE_PORT}/RPC2"
+    ONE_XMLRPC="$LEADER_XMLRPC" onezone server-add "$FEDERATION_ZONE_ID" --name "$HOSTNAME" --rpc "$MY_XMLRPC"
+    if [ $? -ne 0 ]; then
+      drop_db
+      fatal "can not add server to zone $FEDERATION_ZONE_ID via $LEADER_XMLRPC"
+    fi
+    # Sometimes zone have missing server after deploy, we need force syncronize server list to avoid this situations
+    info "fetching server list for zone $FEDERATION_ZONE_ID from mysql://$DB_USER@$LEADER_IP:$DB_PORT/$DB_NAME"
+    MYSQL_OPTS=$(mktemp)
+    echo -e "[client]\npassword=$DB_PASSWD" > "$MYSQL_OPTS"
+    mysqldump --defaults-file="$MYSQL_OPTS" -u"$DB_USER" -h "$LEADER_IP" -P "$DB_PORT" "$DB_NAME" zone_pool --where="oid = $FEDERATION_ZONE_ID" --replace | \
+      mysql --defaults-file="$MYSQL_OPTS" -u "$DB_USER" -h "$DB_SERVER" -P "$DB_PORT" "$DB_NAME"
+    if [ $? -ne 0 ]; then
+      drop_db
+      fatal "can not syncronize server list for zone $FEDERATION_ZONE_ID from mysql://$DB_USER@$LEADER_IP:$DB_PORT/$DB_NAME"
+    fi
+  fi
+}
+
+# Waits for leader, sets LEADER_IP and LEADER_XMLRPC
+wait_leader() {
+  local MAX_RETRIES="$1"
+  local RETRY=0
+
+  LEADER_IP=
+  LEADER_SVC=${LEADER_SVC:-$(hostname -d | awk -F. '{print $1}' | sed 's/-servers$/-headless/')}
+  info "resolving $LEADER_SVC"
+
+  until [ -n "$LEADER_IP" ]; do
+    LEADER_OUT=$(getent hosts "$LEADER_SVC")
+    LEADER_IP=$(echo "$LEADER_OUT" | awk 'NR=1 {print $1}')
+    LEADER_DOMAIN=$(echo "$LEADER_OUT" | awk 'NR=1 {print $2}' | awk -F. '{print $3}')
+    LEADER_COUNT=$(echo "$LEADER_IP" | wc -l)
+
+    LEADER_XMLRPC="http://${LEADER_IP}:${ONE_PORT}/RPC2"
+
+    if [ -z "$LEADER_IP" ]; then
+      info "current leader not found. waiting 10 sec (try ${RETRY:-0}${MAX_RETRIES:+/$MAX_RETRIES})"
+      if [ "$RETRY" = "$MAX_RETRIES" ]; then
+        info "leader not found."
+        return 1
+      fi
+      RETRY=$((RETRY+1))
+      sleep 10
+    elif [ "$LEADER_COUNT" != "1" ]; then
+      fatal "multiple leaders found: $(echo $LEADER_IP | tr '\n' ' ')"
+    elif [ "$LEADER_DOMAIN" != "svc" ]; then
+      fatal "$LEADER_SVC is not a kubernetes service"
+    fi
+  done
+ 
+  info "leader found. ($LEADER_IP)"
+}
+
+wait_previous_host(){
+  local RETRY=0
+  if [ "$FEDERATION_SERVER_ID" != "0" ]; then
+    PREVIOUS_HOSTNAME="${HOSTNAME%-*}-$((FEDERATION_SERVER_ID-1))"
+    until [[ "$(ONE_XMLRPC="$LEADER_XMLRPC" onezone show "$FEDERATION_ZONE_ID" -x | /var/lib/one/remotes/datastore/xpath.rb "/ZONE/SERVER_POOL/SERVER[NAME=\"$PREVIOUS_HOSTNAME\"]/STATE)" | tr -d '\0')" =~ ^(2|3)$ ]]; do
+      info "waiting until $PREVIOUS_HOSTNAME be deployed (try $((RETRY++)))"
+      sleep 10
+    done
+  fi
+}
+
+# Bootstraps new host
 perform_bootstrap() {
   if [ -z "$DB_BACKEND" ]; then
     fatal "Database information is not loaded"
@@ -238,127 +378,20 @@ perform_bootstrap() {
     fatal "can not read OpenNebula XML-RPC port from config"
   fi
 
-  RETRY=${RETRY-0}
-
-  if [ "$RETRY" = "0" ]; then
-    info "starting bootstrap procedure"
-  fi
-
-  LEADER_SVC=${LEADER_SVC:-$(hostname -d | awk -F. '{print $1}' | sed 's/-servers$/-headless/')}
-  info "resolving $LEADER_SVC"
-  LEADER_OUT=$(getent hosts "$LEADER_SVC")
-  LEADER_IP=$(echo "$LEADER_OUT" | awk 'NR=1 {print $1}')
-  LEADER_DOMAIN=$(echo "$LEADER_OUT" | awk 'NR=1 {print $2}' | awk -F. '{print $3}')
-  LEADER_COUNT=$(echo "$LEADER_IP" | wc -l)
-
-  LEADER_XMLRPC="http://${LEADER_IP}:${ONE_PORT}/RPC2"
-  MY_XMLRPC="http://$(hostname -f | cut -d. -f-2):${ONE_PORT}/RPC2"
-
+  info "starting bootstrap procedure"
   if [ "$FEDERATION_SERVER_ID" -ne "0" ] && [ "$DB_BACKEND" != 'mysql' ]; then
     fatal "Only mysql backend support joining multiple instances"
   fi
 
-  if [ -z "$LEADER_IP" ]; then
-
-    # If CREATE_CLUSTER=1 set, allow to initialize database from first pod, otherwise always wait for leader
-    if [ "${CREATE_CLUSTER:-0}" = "1" ] && [ "$FEDERATION_SERVER_ID" -eq "0" ]; then
-
-      rm -f \
-        /var/lib/one/.one/ec2_auth \
-        /var/lib/one/.one/occi_auth \
-        /var/lib/one/.one/oneflow_auth \
-        /var/lib/one/.one/onegate_auth \
-        /var/lib/one/.one/sunstone_auth
-
-      setup_logging
-      info "starting oned"
-      oned -f &
-      ONED_PID="$!"
-
-      sleep 5
-      until onezone list >/dev/null 2>&1; do
-        if ! kill -0 "$ONED_PID" >/dev/null 2>&1; then
-          info "printing oned.log:"
-          cat /var/log/one/oned.log
-          drop_db
-          fatal "oned process is dead"
-        fi
-        info "oned is not ready. waiting 5 sec"
-        sleep 5
-      done
-
-      info "adding $HOSTNAME to zone $FEDERATION_ZONE_ID"
-      onezone server-add "$FEDERATION_ZONE_ID" --name "$HOSTNAME" --rpc "$MY_XMLRPC"
-      if [ $? -ne 0 ]; then
-        fatal "error adding $HOSTNAME to zone $FEDERATION_ZONE_ID"
-      fi
-
-      info "setting serveradmin password"
-      SERVERADMIN_PASSWORD_FILE=$(mktemp)
-      cat /secrets/sunstone_auth | cut -d: -f2 > "$SERVERADMIN_PASSWORD_FILE"
-      oneuser passwd 1 --sha256 -r "$SERVERADMIN_PASSWORD_FILE"
-      if [ $? -ne 0 ]; then
-        fatal "error setting serveradmin password"
-      fi
-      rm -f "$SERVERADMIN_PASSWORD_FILE"
-
-      info 'stopping oned'
-      cleanup
-      info 'oned stopped'
-
-      info "bootstrap procedure finished"
-      return 0
-    else
-      info "current leader not found. waiting 10 sec (try ${RETRY:-0})"
-      sleep 10
-      RETRY=$((RETRY+1))
-      perform_bootstrap
-      return 0
-    fi
-  elif [ "$LEADER_COUNT" != "1" ]; then
-    fatal "multiple leaders found: $(echo $LEADER_IP | tr '\n' ' ')"
-  elif [ "$LEADER_DOMAIN" != "svc" ]; then
-    fatal "$LEADER_SVC is not a kubernetes service"
-  fi
- 
-  info "leader found. ($LEADER_IP)"
-
-  info "checking connection"
-  ONE_XMLRPC="$LEADER_XMLRPC" onezone show "$FEDERATION_ZONE_ID" >/dev/null
-  if [ $? -ne 0 ]; then
-    fatal "can not get zone $FEDERATION_ZONE_ID from $LEADER_XMLRPC"
-  fi
-
-  unset RETRY
-  if [ "$FEDERATION_SERVER_ID" != "0" ]; then
-    PREVIOUS_HOSTNAME="${HOSTNAME%-*}-$((FEDERATION_SERVER_ID-1))"
-    until [ -n "$(ONE_XMLRPC="$LEADER_XMLRPC" onezone show "$FEDERATION_ZONE_ID" -x | /var/lib/one/remotes/datastore/xpath.rb "/ZONE/SERVER_POOL/SERVER[NAME=\"$PREVIOUS_HOSTNAME\"]/NAME)" | tr -d '\0')" ]; do
-      info "waiting until $PREVIOUS_HOSTNAME be deployed (retry $((RETRY++)))"
-      sleep 10
-    done
-  fi
-
-  info "downloading data from mysql://$DB_USER@$LEADER_IP:$DB_PORT/$DB_NAME"
-  MYSQL_OPTS=$(mktemp)
-  echo -e "[client]\npassword=$DB_PASSWD" > "$MYSQL_OPTS"
-  mysqldump  --defaults-file="$MYSQL_OPTS" -u "$DB_USER" -h "$LEADER_IP" -P "$DB_PORT" "$DB_NAME" | \
-    mysql --defaults-file="$MYSQL_OPTS" -u "$DB_USER" -h "$DB_SERVER" -P "$DB_PORT" "$DB_NAME"
-  if [ $? -ne 0 ]; then
-    fatal "can not bootstrap database"
+  # If CREATE_CLUSTER=1 set, allow to initialize database from first pod, otherwise always wait for leader
+  if [ "${CREATE_CLUSTER:-0}" = "1" ] && [ "$FEDERATION_SERVER_ID" -eq "0" ]; then
+    wait_leader 3
+    info "creating new cluster"
+    bootstrap_cluster
+    return $?
   else
-    info "database succesfully bootstraped"
-  fi
-  rm -f "$MYSQL_OPTS"
-
-  if [ -n "$(ONE_XMLRPC="$LEADER_XMLRPC" onezone show "$FEDERATION_ZONE_ID" -x | /var/lib/one/remotes/datastore/xpath.rb "/ZONE/SERVER_POOL/SERVER[NAME=\"$HOSTNAME\"]/NAME)" | tr -d '\0')" ]; then
-    info "$HOSTNAME already member of zone $FEDERATION_ZONE_ID"
-  else
-    info "adding $HOSTNAME to zone $FEDERATION_ZONE_ID via $LEADER_XMLRPC"
-    ONE_XMLRPC="$LEADER_XMLRPC" onezone server-add "$FEDERATION_ZONE_ID" --name "$HOSTNAME" --rpc "$MY_XMLRPC"
-    if [ $? -ne 0 ]; then
-      drop_db
-      fatal "can not add server to zone $FEDERATION_ZONE_ID via $LEADER_XMLRPC"
-    fi
+    wait_leader
+    bootstrap_node
   fi
 
   rm -f "$MYSQL_OPTS"
