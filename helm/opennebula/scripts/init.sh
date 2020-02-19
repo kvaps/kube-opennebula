@@ -485,7 +485,7 @@ ACTIONS:
 
 OPTIONS:
   --create-cluster             Allow to bootstrap new cluster
-  --solo                       Set server_id to -1 (solo mode)
+  --leader <server_id>         Specified federation server_id will force to run in solo mode
 
 EOT
   exit 1
@@ -506,11 +506,16 @@ init() {
 
   setup_keys
 
+  if [ -n "$LEADER_SERVER_ID" ] && [ "$LEADER_SERVER_ID" -lt 0 ] 2>/dev/null; then
+    fatal "federation server_id must be a number"
+  fi
+
   # Override SERVER_ID by MY_ID
-  if [ "${SOLO:-0}" = "1" ]; then
+  load_my_id
+  if [ "${LEADER_SERVER_ID}" = "$MY_ID" ]; then
+    info "Solo mode requested"
     FEDERATION_SERVER_ID="-1"
   else
-    load_my_id
     FEDERATION_SERVER_ID="$MY_ID"
   fi
 
@@ -523,8 +528,13 @@ load_keys() {
       CREATE_CLUSTER="1"
       shift
       ;;
-    --solo)
-      SOLO="1"
+    --leader)
+      if [ -n "$2" ] && [ "$2" -ge 0 ] 2>/dev/null; then
+        LEADER_SERVER_ID="$2"
+      else
+        fatal "Specify exactly one federation server_id to run in solo mode"
+      fi
+      shift
       shift
       ;;
     --*)

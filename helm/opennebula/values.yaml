@@ -59,8 +59,10 @@ oned:
 
   # Allow to bootsrap new cluster
   createCluster: false
-  # Enable debug mode
+
+  # Debug settings
   debug: false
+  leaderId: -1
 
   image:
     repository: docker.io/kvaps/opennebula

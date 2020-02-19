@@ -92,6 +92,10 @@ spec:
         - name: CREATE_CLUSTER
           value: '{{ if eq (printf "%T" .) "bool" }}{{ . | ternary 1 0 }}{{ else }}{{ . }}{{ end }}'
         {{- end }}
+        {{ if ge (int .Values.oned.leaderId) 0 }}
+        - name: LEADER_SERVER_ID
+          value: '{{ .Values.oned.leaderId }}'
+        {{ end }}
         - name: LEADER_SVC_NAME
           value: {{ $fullName }}-oned-leader
         - name: DB_BACKEND
