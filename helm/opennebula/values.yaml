@@ -467,7 +467,7 @@ exporter:
     port: 9100
 
   serviceMonitor:
+    enabled: false
     interval: 30s
-    enabled: true
     labels: {}
     annotations: {}
