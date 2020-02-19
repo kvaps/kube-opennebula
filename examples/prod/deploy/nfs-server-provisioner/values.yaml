@@ -1,0 +1,8 @@
+nodeSelector: {}
+persistence:
+  enabled: true
+  size: 10Gi
+  storageClass: data-1
+storageClass:
+  name: opennebula-nfs
+tolerations: []

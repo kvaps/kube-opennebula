@@ -1,0 +1,29 @@
+{{- if .Values.oned.enabled }}
+{{- $fullName := include "opennebula.fullname" . -}}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ $fullName }}-oned
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ $fullName }}-oned
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["patch"]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ $fullName }}-oned
+subjects:
+- kind: ServiceAccount
+  name: {{ $fullName }}-oned
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: Role
+  name: {{ $fullName }}-oned
+  apiGroup: rbac.authorization.k8s.io
+{{- end }}

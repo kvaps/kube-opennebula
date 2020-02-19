@@ -4,7 +4,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: opennebula-novnc
+  name: {{ $fullName }}-novnc
   labels:
     app: {{ $fullName }}-novnc
     {{- if .Values.novnc.service.labels }}
@@ -17,7 +17,7 @@ metadata:
 spec:
   ports:
   - name: websocket
-    port: {{ .Values.flow.service.port }}
+    port: {{ .Values.novnc.service.port }}
   selector:
     app: {{ $fullName }}-novnc
   type: ClusterIP

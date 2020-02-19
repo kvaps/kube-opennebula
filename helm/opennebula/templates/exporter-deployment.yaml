@@ -1,0 +1,103 @@
+{{- if .Values.exporter.enabled }}
+{{- $fullName := include "opennebula.fullname" . -}}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $fullName }}-exporter
+  labels:
+    app: {{ $fullName }}-exporter
+    {{- if .Values.exporter.labels }}
+    {{- toYaml .Values.exporter.labels | nindent 4 }}
+    {{- end }}
+  {{- with .Values.exporter.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
+spec:
+  replicas: {{ .Values.exporter.replicas }}
+  selector:
+    matchLabels:
+      app: {{ $fullName }}-exporter
+  template:
+    metadata:
+      labels:
+        app: {{ $fullName }}-exporter
+        {{- with .Values.exporter.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.exporter.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      containers:
+      - name: exporter
+        image: {{ .Values.exporter.image.repository }}:{{ .Values.exporter.image.tag }}
+        imagePullPolicy: {{ .Values.exporter.image.pullPolicy }}
+        args:
+        - --web.telemetry-path={{ .Values.exporter.telemetryPath }}
+        - --web.listen-address=:{{ .Values.exporter.port }}
+        livenessProbe:
+          exec:
+            command:
+            - /bin/bash
+            - -c
+            - "opennebula_exporter > /metrics/opennebula.prom.$$ && mv /metrics/opennebula.prom.$$ /metrics/opennebula.prom"
+          initialDelaySeconds: 5
+          failureThreshold: 1
+          periodSeconds: {{ .Values.exporter.periodSeconds }}
+        env:
+        - name: ONE_XMLRPC
+          value: http://{{ template "opennebula.fullname" . }}-oned:{{ .Values.oned.service.port }}/RPC2
+        {{- with .Values.exporter.extraEnv }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        ports:
+        - name: http
+          containerPort: {{ .Values.exporter.port }}
+        volumeMounts:
+        {{- with .Values.timezone }}
+        - name: timezone
+          mountPath: /etc/localtime
+          readOnly: true
+        {{- end }}
+        - name: one-keys
+          mountPath: /var/lib/one/.one/one_auth
+          subPath: one_auth
+        {{- with .Values.exporter.extraVolumeMounts }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.exporter.sidecars }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+      {{- with .Values.exporter.image.pullSecrets }}
+      imagePullSecrets:
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+      {{- with .Values.exporter.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.exporter.tolerations }}
+      tolerations:
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+      securityContext:
+        fsGroup: 9869
+        runAsUser: 9869
+      volumes:
+      {{- with .Values.timezone }}
+      - name: timezone
+        hostPath:
+          path: /usr/share/zoneinfo/{{ . }}
+          type: File
+      {{- end }}
+      - name: one-keys
+        secret:
+          secretName: {{ $fullName }}-one-keys
+      {{- with .Values.exporter.extraVolumes }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+{{- end }}

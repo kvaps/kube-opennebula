@@ -118,7 +118,7 @@ load_version_info() {
 
       RETRY=1
       until DB_TABLES="$(mysql --defaults-file="$MYSQL_OPTS" -u "$DB_USER" -h "$DB_SERVER" -P "$DB_PORT" "$DB_NAME" -N -B -e "SHOW TABLES like 'local_db_versioning'" 2>/dev/null)"; do
-        info "can not connect to mysql database mysql://$DB_USER@$DB_SERVER:$DB_PORT/$DB_NAME (retry $((RETRY++)))"
+        info "can not connect to mysql database mysql://$DB_USER@$DB_SERVER:$DB_PORT/$DB_NAME (try $((RETRY++)))"
         sleep 10
       done
       unset RETRY
@@ -158,7 +158,7 @@ perform_upgrade() {
     return 0
   fi
 
-  NEWER_VERSION=$(echo -e "$LOCAL_VERSION\n$NEW_VERSION" | sort -V | tail-n1)
+  NEWER_VERSION=$(echo -e "$LOCAL_VERSION\n$NEW_VERSION" | sort -V | tail -n1)
 
   if [ "$NEWER_VERSION" = "$LOCAL_VERSION" ]; then
     fatal "Database version $LOCAL_VERSION is higher than $NEW_VERSION."
@@ -223,7 +223,147 @@ drop_db(){
   esac
 }
 
-# Bootstraps new node
+# Creates new cluster
+bootstrap_cluster(){
+   rm -f \
+     /var/lib/one/.one/ec2_auth \
+     /var/lib/one/.one/occi_auth \
+     /var/lib/one/.one/oneflow_auth \
+     /var/lib/one/.one/onegate_auth \
+     /var/lib/one/.one/sunstone_auth
+
+   setup_logging
+   info "starting oned"
+   oned -f &
+   ONED_PID="$!"
+
+   sleep 5
+   until onezone list >/dev/null 2>&1; do
+     if ! kill -0 "$ONED_PID" >/dev/null 2>&1; then
+       info "printing oned.log:"
+       cat /var/log/one/oned.log
+       drop_db
+       fatal "oned process is dead"
+     fi
+     info "oned is not ready. waiting 5 sec"
+     sleep 5
+   done
+
+   info "adding $HOSTNAME to zone $FEDERATION_ZONE_ID"
+   onezone server-add "$FEDERATION_ZONE_ID" --name "$HOSTNAME" --rpc "$MY_XMLRPC"
+   if [ $? -ne 0 ]; then
+     fatal "error adding $HOSTNAME to zone $FEDERATION_ZONE_ID"
+   fi
+
+   info "setting serveradmin password"
+   SERVERADMIN_PASSWORD_FILE=$(mktemp)
+   cat /secrets/sunstone_auth | cut -d: -f2 > "$SERVERADMIN_PASSWORD_FILE"
+   oneuser passwd 1 --sha256 -r "$SERVERADMIN_PASSWORD_FILE"
+   if [ $? -ne 0 ]; then
+     fatal "error setting serveradmin password"
+   fi
+   rm -f "$SERVERADMIN_PASSWORD_FILE"
+
+   info 'stopping oned'
+   cleanup
+   info 'oned stopped'
+
+   info "bootstrap procedure finished"
+}
+
+# Joining node to the existing cluster
+bootstrap_node(){
+  info "checking connection"
+  ONE_XMLRPC="$LEADER_XMLRPC" onezone show "$FEDERATION_ZONE_ID" >/dev/null
+  if [ $? -ne 0 ]; then
+    fatal "can not get zone $FEDERATION_ZONE_ID from $LEADER_XMLRPC"
+  fi
+
+  wait_previous_host
+  wait_leader
+
+  info "downloading data from mysql://$DB_USER@$LEADER_IP:$DB_PORT/$DB_NAME"
+  MYSQL_OPTS=$(mktemp)
+  echo -e "[client]\npassword=$DB_PASSWD" > "$MYSQL_OPTS"
+  mysqldump --defaults-file="$MYSQL_OPTS" -u "$DB_USER" -h "$LEADER_IP" -P "$DB_PORT" "$DB_NAME" | \
+    mysql --defaults-file="$MYSQL_OPTS" -u "$DB_USER" -h "$DB_SERVER" -P "$DB_PORT" "$DB_NAME"
+  if [ $? -ne 0 ]; then
+    fatal "can not bootstrap database"
+  else
+    info "database succesfully bootstraped"
+  fi
+  rm -f "$MYSQL_OPTS"
+
+  if [ -n "$(ONE_XMLRPC="$LEADER_XMLRPC" onezone show "$FEDERATION_ZONE_ID" -x | /var/lib/one/remotes/datastore/xpath.rb "/ZONE/SERVER_POOL/SERVER[NAME=\"$HOSTNAME\"]/NAME)" | tr -d '\0')" ]; then
+    info "$HOSTNAME already member of zone $FEDERATION_ZONE_ID"
+  else
+    info "adding $HOSTNAME to zone $FEDERATION_ZONE_ID via $LEADER_XMLRPC"
+    MY_XMLRPC="http://$(hostname -f | cut -d. -f-2):${ONE_PORT}/RPC2"
+    ONE_XMLRPC="$LEADER_XMLRPC" onezone server-add "$FEDERATION_ZONE_ID" --name "$HOSTNAME" --rpc "$MY_XMLRPC"
+    if [ $? -ne 0 ]; then
+      drop_db
+      fatal "can not add server to zone $FEDERATION_ZONE_ID via $LEADER_XMLRPC"
+    fi
+    # Sometimes zone have missing server after deploy, we need force syncronize server list to avoid this situations
+    info "fetching server list for zone $FEDERATION_ZONE_ID from mysql://$DB_USER@$LEADER_IP:$DB_PORT/$DB_NAME"
+    MYSQL_OPTS=$(mktemp)
+    echo -e "[client]\npassword=$DB_PASSWD" > "$MYSQL_OPTS"
+    mysqldump --defaults-file="$MYSQL_OPTS" -u"$DB_USER" -h "$LEADER_IP" -P "$DB_PORT" "$DB_NAME" zone_pool --where="oid = $FEDERATION_ZONE_ID" --replace | \
+      mysql --defaults-file="$MYSQL_OPTS" -u "$DB_USER" -h "$DB_SERVER" -P "$DB_PORT" "$DB_NAME"
+    if [ $? -ne 0 ]; then
+      drop_db
+      fatal "can not syncronize server list for zone $FEDERATION_ZONE_ID from mysql://$DB_USER@$LEADER_IP:$DB_PORT/$DB_NAME"
+    fi
+  fi
+}
+
+# Waits for leader, sets LEADER_IP and LEADER_XMLRPC
+wait_leader() {
+  local MAX_RETRIES="$1"
+  local RETRY=0
+
+  LEADER_IP=
+  LEADER_SVC=${LEADER_SVC:-$(hostname -d | awk -F. '{print $1}' | sed 's/-servers$/-headless/')}
+  info "resolving $LEADER_SVC"
+
+  until [ -n "$LEADER_IP" ]; do
+    LEADER_OUT=$(getent hosts "$LEADER_SVC")
+    LEADER_IP=$(echo "$LEADER_OUT" | awk 'NR=1 {print $1}')
+    LEADER_DOMAIN=$(echo "$LEADER_OUT" | awk 'NR=1 {print $2}' | awk -F. '{print $3}')
+    LEADER_COUNT=$(echo "$LEADER_IP" | wc -l)
+
+    LEADER_XMLRPC="http://${LEADER_IP}:${ONE_PORT}/RPC2"
+
+    if [ -z "$LEADER_IP" ]; then
+      info "current leader not found. waiting 10 sec (try ${RETRY:-0}${MAX_RETRIES:+/$MAX_RETRIES})"
+      if [ "$RETRY" = "$MAX_RETRIES" ]; then
+        info "leader not found."
+        return 1
+      fi
+      RETRY=$((RETRY+1))
+      sleep 10
+    elif [ "$LEADER_COUNT" != "1" ]; then
+      fatal "multiple leaders found: $(echo $LEADER_IP | tr '\n' ' ')"
+    elif [ "$LEADER_DOMAIN" != "svc" ]; then
+      fatal "$LEADER_SVC is not a kubernetes service"
+    fi
+  done
+ 
+  info "leader found. ($LEADER_IP)"
+}
+
+wait_previous_host(){
+  local RETRY=0
+  if [ "$FEDERATION_SERVER_ID" != "0" ]; then
+    PREVIOUS_HOSTNAME="${HOSTNAME%-*}-$((FEDERATION_SERVER_ID-1))"
+    until [[ "$(ONE_XMLRPC="$LEADER_XMLRPC" onezone show "$FEDERATION_ZONE_ID" -x | /var/lib/one/remotes/datastore/xpath.rb "/ZONE/SERVER_POOL/SERVER[NAME=\"$PREVIOUS_HOSTNAME\"]/STATE)" | tr -d '\0')" =~ ^(2|3)$ ]]; do
+      info "waiting until $PREVIOUS_HOSTNAME be deployed (try $((RETRY++)))"
+      sleep 10
+    done
+  fi
+}
+
+# Bootstraps new host
 perform_bootstrap() {
   if [ -z "$DB_BACKEND" ]; then
     fatal "Database information is not loaded"
@@ -238,123 +378,20 @@ perform_bootstrap() {
     fatal "can not read OpenNebula XML-RPC port from config"
   fi
 
-  RETRY=${RETRY-0}
-
-  if [ "$RETRY" = "0" ]; then
-    info "starting bootstrap procedure"
-  fi
-
-  LEADER_SVC=${LEADER_SVC:-$(hostname -d | awk -F. '{print $1}' | sed 's/-servers$/-leader/')}
-  info "resolving $LEADER_SVC"
-  LEADER_OUT=$(getent hosts "$LEADER_SVC")
-  LEADER_IP=$(echo "$LEADER_OUT" | awk 'NR=1 {print $1}')
-  LEADER_DOMAIN=$(echo "$LEADER_OUT" | awk 'NR=1 {print $2}' | awk -F. '{print $3}')
-
-  LEADER_XMLRPC="http://${LEADER_IP}:${ONE_PORT}/RPC2"
-  MY_XMLRPC="http://$(hostname -f | cut -d. -f-2):${ONE_PORT}/RPC2"
-
-  
+  info "starting bootstrap procedure"
   if [ "$FEDERATION_SERVER_ID" -ne "0" ] && [ "$DB_BACKEND" != 'mysql' ]; then
     fatal "Only mysql backend support joining multiple instances"
   fi
 
-  if [ -z "$LEADER_IP" ]; then
-
-    # If CREATE_CLUSTER=1 set, allow to initialize database from first pod, otherwise always wait for leader
-    if [ "${CREATE_CLUSTER:-0}" = "1" ] && [ "$FEDERATION_SERVER_ID" -eq "0" ]; then
-
-      rm -f \
-        /var/lib/one/.one/ec2_auth \
-        /var/lib/one/.one/occi_auth \
-        /var/lib/one/.one/oneflow_auth \
-        /var/lib/one/.one/onegate_auth \
-        /var/lib/one/.one/sunstone_auth
-
-      info "starting oned"
-      oned -f 2>/dev/null &
-
-      sleep 5
-      until onezone list >/dev/null 2>&1; do
-        if ! kill -0 "$ONED_PID" >/dev/null 2>&1; then
-          info "last 10 lines of oned.log:"
-          tail -n10 /var/log/one/oned.log | sed 's/^/  /'
-          drop_db
-          fatal "oned process is dead"
-        fi
-        info "oned is not ready. waiting 5 sec"
-        sleep 5
-      done
-
-      info "adding $HOSTNAME to zone $FEDERATION_ZONE_ID"
-      onezone server-add "$FEDERATION_ZONE_ID" --name "$HOSTNAME" --rpc "$MY_XMLRPC"
-      if [ $? -ne 0 ]; then
-        fatal "error adding $HOSTNAME to zone $FEDERATION_ZONE_ID"
-      fi
-
-      info "setting serveradmin password"
-      SERVERADMIN_PASSWORD_FILE=$(mktemp)
-      cat /secrets/sunstone_auth | cut -d: -f2 > "$SERVERADMIN_PASSWORD_FILE"
-      oneuser passwd 1 --sha1 -r "$SERVERADMIN_PASSWORD_FILE"
-      if [ $? -ne 0 ]; then
-        fatal "error setting serveradmin password"
-      fi
-      rm -f "$SERVERADMIN_PASSWORD_FILE"
-
-      info 'stopping oned'
-      cleanup
-      info 'oned stopped'
-
-      info "bootstrap procedure finished"
-      return 0
-    else
-      info "current leader not found. waiting 10 sec (try ${RETRY:-0})"
-      sleep 10
-      RETRY=$((RETRY+1))
-      perform_bootstrap
-      return 0
-    fi
-  elif [ "$LEADER_DOMAIN" != "svc" ]; then
-    fatal "$LEADER_SVC is not a service"
-  fi
- 
-  info "leader found. ($LEADER_IP)"
-
-  info "checking connection"
-  ONE_XMLRPC="$LEADER_XMLRPC" onezone show "$FEDERATION_ZONE_ID" >/dev/null
-  if [ $? -ne 0 ]; then
-    fatal "can not get zone $FEDERATION_ZONE_ID from $LEADER_XMLRPC"
-  fi
-
-  unset RETRY
-  if [ "$FEDERATION_SERVER_ID" != "0" ]; then
-    PREVIOUS_HOSTNAME="${HOSTNAME%-*}-$((FEDERATION_SERVER_ID-1))"
-    until [ -n "$(ONE_XMLRPC="$LEADER_XMLRPC" onezone show "$FEDERATION_ZONE_ID" -x | /var/lib/one/remotes/datastore/xpath.rb "/ZONE/SERVER_POOL/SERVER[NAME=\"$PREVIOUS_HOSTNAME\"]/NAME)" | tr -d '\0')" ]; do
-      info "waiting until $PREVIOUS_HOSTNAME be deployed (retry $((RETRY++)))"
-      sleep 10
-    done
-  fi
-
-  info "downloading data from mysql://$DB_USER@$LEADER_IP:$DB_PORT/$DB_NAME"
-  MYSQL_OPTS=$(mktemp)
-  echo -e "[client]\npassword=$DB_PASSWD" > "$MYSQL_OPTS"
-  mysqldump  --defaults-file="$MYSQL_OPTS" -u "$DB_USER" -h "$LEADER_IP" -P "$DB_PORT" "$DB_NAME" | \
-    mysql --defaults-file="$MYSQL_OPTS" -u "$DB_USER" -h "$DB_SERVER" -P "$DB_PORT" "$DB_NAME"
-  if [ $? -ne 0 ]; then
-    fatal "can not bootstrap database"
+  # If CREATE_CLUSTER=1 set, allow to initialize database from first pod, otherwise always wait for leader
+  if [ "${CREATE_CLUSTER:-0}" = "1" ] && [ "$FEDERATION_SERVER_ID" -eq "0" ]; then
+    wait_leader 3
+    info "creating new cluster"
+    bootstrap_cluster
+    return $?
   else
-    info "database succesfully bootstraped"
-  fi
-  rm -f "$MYSQL_OPTS"
-
-  if [ -n "$(ONE_XMLRPC="$LEADER_XMLRPC" onezone show "$FEDERATION_ZONE_ID" -x | /var/lib/one/remotes/datastore/xpath.rb "/ZONE/SERVER_POOL/SERVER[NAME=\"$HOSTNAME\"]/NAME)" | tr -d '\0')" ]; then
-    info "$HOSTNAME already member of zone $FEDERATION_ZONE_ID"
-  else
-    info "adding $HOSTNAME to zone $FEDERATION_ZONE_ID via $LEADER_XMLRPC"
-    ONE_XMLRPC="$LEADER_XMLRPC" onezone server-add "$FEDERATION_ZONE_ID" --name "$HOSTNAME" --rpc "$MY_XMLRPC"
-    if [ $? -ne 0 ]; then
-      drop_db
-      fatal "can not add server to zone $FEDERATION_ZONE_ID via $LEADER_XMLRPC"
-    fi
+    wait_leader
+    bootstrap_node
   fi
 
   rm -f "$MYSQL_OPTS"
@@ -368,7 +405,7 @@ inject_db_config() {
   fi
 
   awk -v RS='\n[^#\n]*DB = \\[[^]]*]' \
-    -v ORS= '1;NR==1{printf "\nDB = [ BACKEND = \"'"$DB_BACKEND"'\",\n       SERVER  = \"'"$DB_SERVER"'\",\n       PORT    = '"$DB_PORT"',\n       USER    = \"'"$DB_USER"'\",\n       PASSWD  = \"'"$DB_PASSWD"'\",\n       DB_NAME = \"'"$DB_NAME"'\",\n       CONNECTIONS = '"$DB_CONNECTIONS"' ]"}' 
+    -v ORS= '1;NR==1{printf "\nDB = [ BACKEND = \"'"${DB_BACKEND}\\\"${DB_SERVER:+,\n       SERVER  = \\\"${DB_SERVER}\\\"}${DB_PORT:+,\n       PORT    = ${DB_PORT}}${DB_USER:+,\n       USER    = \\\"${DB_USER}\\\"}${DB_PASSWD:+,\n       PASSWD  = \\\"${DB_PASSWD}\\\"}${DB_NAME:+,\n       DB_NAME = \\\"${DB_NAME}\\\"}${DB_CONNECTIONS:+,\n       CONNECTIONS = ${DB_CONNECTIONS}}${DB_ENCODING:+,\n       ENCODING = \\\"${DB_ENCODING}\\\"}"'\n]"}'
 }
 
 # Injects federation config into streamed oned.conf file
@@ -407,7 +444,7 @@ setup_keys(){
 
 # Setups oned.conf and runs injectiors from the argumets
 setup_config(){
-  info "setup oned.conf"
+  info "setup oned.conf ${*:+[$*]}"
   for i in "$@"; do
     local INJECT_FUNCTIONS+=" | inject_${i}_config"
   done
@@ -417,46 +454,157 @@ setup_config(){
   fi
 }
 
-# Sets logging to stdout (workaround for https://github.com/OpenNebula/one/issues/3900)
+# Sets up logging to temprorary file
 setup_logging(){
+  rm -f /tmp/oned.log
   touch /tmp/oned.log
   ln -sf /tmp/oned.log /var/log/one/oned.log
+}
+
+# Redirects log to stdout (workaround for https://github.com/OpenNebula/one/issues/3900)
+print_logging(){
   tail -F /tmp/oned.log 2>/dev/null &
   while sleep 3600; do
     echo -n > /tmp/oned.log
   done &
 }
 
-main() {
+# Prints usage and exit
+usage() {
+  cat <<EOT
+
+USAGE:
+  $0 <action>
+
+ACTIONS:
+  config [db] [federation]     Setup oned.conf and keys
+  bootstrap                    Perform the bootstrap procedure
+  upgrade                      Perform the upgrade procedure
+  start                        Setup oned.conf and keys, perform bootstrap (or upgrade) and then start oned
+  debug                        Setup oned.conf and keys, then do nothing
+
+OPTIONS:
+  --create-cluster             Allow to bootstrap new cluster
+  --leader <server_id>         Specified federation server_id will force to run in solo mode
+
+EOT
+  exit 1
+}
+
+# Loads vars and defaults
+init() {
   trap cleanup EXIT
   info "initializing"
   load_db_config
+  load_federation_config
+  load_version_info
+
+  # Setup sqlite path
   if [ "$DB_BACKEND" = "sqlite" ]; then
     ln -sf /data/one.db /var/lib/one/one.db
   fi
 
-  load_federation_config
-  load_version_info
-  load_my_id
-
-  # Override SERVER_ID by MY_ID
-  FEDERATION_SERVER_ID="$MY_ID"
-
   setup_keys
-  setup_config db
 
-  if [ -n "$LOCAL_VERSION" ]; then
-    perform_upgrade
-  else
-    perform_bootstrap
+  if [ -n "$LEADER_SERVER_ID" ] && [ "$LEADER_SERVER_ID" -lt 0 ] 2>/dev/null; then
+    fatal "federation server_id must be a number"
   fi
 
-  setup_config db federation
-  setup_keys
-  setup_logging
+  # Override SERVER_ID by MY_ID
+  load_my_id
+  if [ "${LEADER_SERVER_ID}" = "$MY_ID" ]; then
+    info "Solo mode requested"
+    FEDERATION_SERVER_ID="-1"
+  else
+    FEDERATION_SERVER_ID="$MY_ID"
+  fi
 
-  info "starting opennebula"
-  oned -f
 }
 
-main
+load_keys() {
+  while [ $# -gt 0 ]; do
+    case $1 in
+    --create-cluster)
+      CREATE_CLUSTER="1"
+      shift
+      ;;
+    --leader)
+      if [ -n "$2" ] && [ "$2" -ge 0 ] 2>/dev/null; then
+        LEADER_SERVER_ID="$2"
+      else
+        fatal "Specify exactly one federation server_id to run in solo mode"
+      fi
+      shift
+      shift
+      ;;
+    --*)
+      usage
+      ;;
+    *)
+      if [ -n "$ACTION" ]; then
+        if [ "$ACTION" = "config" ]; then
+          EXTRA_ARGS+=" $1"
+          shift
+          continue
+        else
+          usage
+        fi
+      fi
+      ACTION="$1"
+      shift
+      ;;
+    esac
+  done
+  if [ -z "$ACTION" ]; then
+    usage
+  fi
+}
+
+main() {
+  load_keys "$@"
+  case $ACTION in
+    config)
+      init
+      setup_config $EXTRA_ARGS
+      exit $?
+      ;;
+    upgrade)
+      init
+      setup_config db federation
+      perform_upgrade
+      ;;
+    bootstrap)
+      init
+      setup_config db
+      perform_bootstrap
+      setup_config db federation
+      ;;
+    start)
+      init
+      if [ -n "$LOCAL_VERSION" ]; then
+        setup_config db federation
+        perform_upgrade
+      else
+        setup_config db
+        perform_bootstrap
+        setup_keys
+        setup_config db federation
+      fi
+      setup_logging
+      print_logging
+      info "starting opennebula"
+      oned -f
+      ;;
+    debug)
+      init
+      setup_config db federation
+      info "doing nothing (debug mode requested)"
+      sleep infinity
+      ;;
+    *)
+      fatal "wrong action $ACTION"
+      ;;
+  esac
+}
+
+main "$@"

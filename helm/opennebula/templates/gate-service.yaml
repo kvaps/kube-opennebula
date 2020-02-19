@@ -17,7 +17,7 @@ metadata:
 spec:
   ports:
   - name: http
-    port: {{ .Values.flow.service.port }}
+    port: {{ .Values.gate.service.port }}
   selector:
     app: {{ $fullName }}-gate
   type: ClusterIP

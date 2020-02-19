@@ -27,10 +27,11 @@ spec:
         {{- with .Values.flow.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
-      {{- with .Values.flow.podAnnotations }}
       annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/flow-configmap.yaml") . | sha256sum }}
+        {{- with .Values.flow.podAnnotations }}
         {{- toYaml . | nindent 8 }}
-      {{- end }}
+        {{- end }}
     spec:
       containers:
       - name: oneflow
@@ -40,6 +41,10 @@ spec:
         ports:
         - name: http
           containerPort: {{ .Values.flow.port }}
+        {{- with .Values.flow.extraEnv }}
+        env:
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
         volumeMounts:
         {{- with .Values.timezone }}
         - name: timezone
@@ -52,6 +57,12 @@ spec:
         - mountPath: /var/lib/one/.one/oneflow_auth
           name: one-keys
           subPath: oneflow_auth
+        {{- with .Values.flow.extraVolumeMounts }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.flow.sidecars }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
       {{- with .Values.flow.image.pullSecrets }}
       imagePullSecrets:
       {{- toYaml . | nindent 6 }}
@@ -80,4 +91,7 @@ spec:
       - name: one-keys
         secret:
           secretName: {{ $fullName }}-one-keys
+      {{- with .Values.flow.extraVolumes }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
 {{- end }}

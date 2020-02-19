@@ -29,14 +29,17 @@ spec:
         {{- with .Values.oned.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
-      {{- with .Values.oned.podAnnotations }}
       annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/oned-configmap.yaml") . | sha256sum }}
+        {{- with .Values.oned.podAnnotations }}
         {{- toYaml . | nindent 8 }}
-      {{- end }}
+        {{- end }}
     spec:
+      serviceAccountName: {{ $fullName }}-oned
       containers:
       {{- if and .Values.oned.db.enabled (eq .Values.oned.db.backend "mysql") }}
       - name: mysql
+        args: [ "--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci" ]
         image: {{ .Values.oned.db.image.repository }}:{{ .Values.oned.db.image.tag }}
         imagePullPolicy: {{ .Values.oned.db.image.pullPolicy }}
         volumeMounts:
@@ -47,6 +50,9 @@ spec:
         {{- end }}
         - name: data
           mountPath: /var/lib/mysql
+        {{- with .Values.oned.db.extraVolumeMounts }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
         env:
         - name: MYSQL_USER
           value: {{ .Values.oned.db.user }}
@@ -62,23 +68,34 @@ spec:
               name: {{ $fullName }}-db-keys
         - name: MYSQL_DATABASE
           value: {{ .Values.oned.db.dbName }}
+        {{- with .Values.oned.db.extraEnv }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       {{- end }}
-
       - name: oned
         image: {{ .Values.oned.image.repository }}:{{ .Values.oned.image.tag }}
         imagePullPolicy: {{ .Values.oned.image.pullPolicy }}
         command: [ '/scripts/init.sh' ]
+        args: [ '{{ if .Values.oned.debug }}debug{{ else }}start{{ end }}' ]
         ports:
         - name: http
           containerPort: {{ .Values.oned.port }}
+        - name: hm-subscriber
+          containerPort: {{ .Values.oned.one_hm.subscriberPort }}
+        - name: hm-replier
+          containerPort: {{ .Values.oned.one_hm.replierPort }}
         - name: collectd
           containerPort: {{ .Values.oned.collectd.port }}
           protocol: UDP
         env:
-        {{- if .Values.oned.createCluster }}
+        {{- with .Values.oned.createCluster }}
         - name: CREATE_CLUSTER
-          value: '1'
+          value: '{{ if eq (printf "%T" .) "bool" }}{{ . | ternary 1 0 }}{{ else }}{{ . }}{{ end }}'
         {{- end }}
+        {{ if ge (int .Values.oned.leaderId) 0 }}
+        - name: LEADER_SERVER_ID
+          value: '{{ .Values.oned.leaderId }}'
+        {{ end }}
         - name: LEADER_SVC_NAME
           value: {{ $fullName }}-oned-leader
         - name: DB_BACKEND
@@ -95,6 +112,9 @@ spec:
               name: {{ $fullName }}-db-keys
         - name: DB_NAME
           value: {{ .Values.oned.db.dbName }}
+        {{- with .Values.oned.extraEnv }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
         {{- end }}
         volumeMounts:
         {{- with .Values.timezone }}
@@ -127,12 +147,20 @@ spec:
         - name: data
           mountPath: /data
         {{- end }}
+        {{- with .Values.oned.extraVolumeMounts }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
         readinessProbe:
           exec:
             command:
-            - /scripts/readiness-probe.sh
+            - /usr/bin/onezone
+            - list
           initialDelaySeconds: 5
           periodSeconds: 5
+      {{- with .Values.oned.sidecars }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+
       terminationGracePeriodSeconds: 30
       {{- with .Values.oned.image.pullSecrets }}
       imagePullSecrets:
@@ -197,6 +225,10 @@ spec:
         {{- else }}
         emptyDir:
         {{- end }}
+      {{- with .Values.oned.extraVolumes }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+
 
   {{- if and .Values.persistence.data.enabled (not .Values.persistence.data.existingClaim) }}
   volumeClaimTemplates:

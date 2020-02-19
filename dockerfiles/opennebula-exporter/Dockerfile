@@ -105,21 +105,48 @@ RUN apt-get update \
 # Specific part
 # ------------------------------------------------------------------------------
 
-# Install opennebula
-COPY --from=builder /opennebula-gate_*.deb /packages/
-RUN apt-get -y update \
- && ln -s /bin/true /usr/bin/systemd-tmpfiles \
- && dpkg -i packages/opennebula-gate_*.deb || true \
- && apt-get -yf install \
- && dpkg -l opennebula-gate \
- && rm -f /usr/bin/systemd-tmpfiles \
+RUN apt-get update \
+ && apt-get -y install xmlstarlet \
  && apt-get -y clean
 
-# Fix permissions
-RUN chown -R oneadmin:oneadmin /etc/one
+COPY --from=prom/node-exporter:v0.18.1 /bin/node_exporter /bin/node_exporter
+ADD https://raw.githubusercontent.com/kvaps/opennebula-exporter/7b4c10ec07377d1b4b9094020c856b0b6c0b5c73/opennebula_exporter /bin/opennebula_exporter
+RUN chmod 755 /bin/opennebula_exporter \
+ && mkdir -p /metrics \
+ && chown oneadmin:oneadmin /metrics
 
-# Logging to /dev/stdout
-RUN sed -i 's|^\(ONEGATE_LOG *=\).*|\1 "/dev/stdout"|' /usr/lib/one/onegate/onegate-server.rb
-
-USER oneadmin
-ENTRYPOINT [ "/usr/bin/ruby", "/usr/lib/one/onegate/onegate-server.rb" ]
+ENTRYPOINT [ \
+  "/bin/node_exporter", \
+  "--no-collector.arp", \
+  "--no-collector.bcache", \
+  "--no-collector.bonding", \
+  "--no-collector.conntrack", \
+  "--no-collector.cpu", \
+  "--no-collector.cpufreq", \
+  "--no-collector.diskstats", \
+  "--no-collector.edac", \
+  "--no-collector.entropy", \
+  "--no-collector.filefd", \
+  "--no-collector.filesystem", \
+  "--no-collector.hwmon", \
+  "--no-collector.infiniband", \
+  "--no-collector.ipvs", \
+  "--no-collector.loadavg", \
+  "--no-collector.mdadm", \
+  "--no-collector.meminfo", \
+  "--no-collector.netclass", \
+  "--no-collector.netdev", \
+  "--no-collector.netstat", \
+  "--no-collector.nfs", \
+  "--no-collector.nfsd", \
+  "--no-collector.pressure", \
+  "--no-collector.sockstat", \
+  "--no-collector.stat", \
+  "--no-collector.time", \
+  "--no-collector.timex", \
+  "--no-collector.uname", \
+  "--no-collector.vmstat", \
+  "--no-collector.xfs", \
+  "--no-collector.zfs", \
+  "--collector.textfile.directory=/metrics" \
+]

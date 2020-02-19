@@ -27,10 +27,11 @@ spec:
         {{- with .Values.sunstone.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
-      {{- with .Values.sunstone.podAnnotations }}
       annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/sunstone-configmap.yaml") . | sha256sum }}
+        {{- with .Values.sunstone.podAnnotations }}
         {{- toYaml . | nindent 8 }}
-      {{- end }}
+        {{- end }}
     spec:
       containers:
       - name: sunstone
@@ -44,6 +45,10 @@ spec:
         ports:
         - name: http
           containerPort: {{ .Values.sunstone.port }}
+        {{- with .Values.flow.extraEnv }}
+        env:
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
         volumeMounts:
         {{- with .Values.timezone }}
         - name: timezone
@@ -65,12 +70,18 @@ spec:
         - name: shared
           mountPath: /var/lib/one/sunstone_vnc_tokens
           subPath: sunstone_vnc_tokens
+        {{- with .Values.sunstone.extraVolumeMounts }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
         livenessProbe:
           httpGet:
             path: /
             port: 9869
           initialDelaySeconds: 5
           periodSeconds: 5
+      {{- with .Values.flow.sidecars }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
       {{- with .Values.sunstone.image.pullSecrets }}
       imagePullSecrets:
       {{- toYaml . | nindent 6 }}
@@ -110,4 +121,7 @@ spec:
         {{- else }}
         emptyDir:
         {{- end }}
+      {{- with .Values.sunstone.extraVolumes }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
 {{- end }}
