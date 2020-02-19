@@ -108,7 +108,7 @@ RUN apt-get update \
 # Install opennebula
 COPY --from=builder /opennebula_*.deb /packages/
 RUN apt-get -y update \
- && apt-get -y install mysql-client \
+ && apt-get -y install mysql-client augeas-tools \
  && ln -s /bin/true /usr/bin/systemd-tmpfiles \
  && dpkg -i packages/opennebula_*.deb || true \
  && apt-get -yf install \
