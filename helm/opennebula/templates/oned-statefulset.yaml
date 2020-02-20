@@ -105,7 +105,7 @@ spec:
           value: {{ .Values.oned.db.server }}
         - name: DB_USER
           value: {{ .Values.oned.db.user }}
-        - name: DB_PASSWORD
+        - name: DB_PASSWD
           valueFrom:
             secretKeyRef:
               key: mysqlPassword

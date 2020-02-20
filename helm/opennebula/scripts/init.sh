@@ -250,8 +250,10 @@ bootstrap_cluster(){
    done
 
    info "adding $HOSTNAME to zone $FEDERATION_ZONE_ID"
+   MY_XMLRPC="http://$(hostname -f | cut -d. -f-2):${ONE_PORT}/RPC2"
    onezone server-add "$FEDERATION_ZONE_ID" --name "$HOSTNAME" --rpc "$MY_XMLRPC"
    if [ $? -ne 0 ]; then
+     drop_db
      fatal "error adding $HOSTNAME to zone $FEDERATION_ZONE_ID"
    fi
 
