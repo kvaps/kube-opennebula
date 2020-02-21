@@ -104,6 +104,7 @@ oned:
         NAME: kvm
         SUNSTONE_NAME: KVM
         TYPE: kvm
+    ONEGATE_ENDPOINT: "https://gate.opennebula.example.org"
 
 sched:
   image:
