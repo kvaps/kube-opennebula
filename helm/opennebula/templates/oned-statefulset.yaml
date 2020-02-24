@@ -138,6 +138,9 @@ spec:
         - name: ssh-keys
           mountPath: /var/lib/one/.ssh
         - name: shared
+          mountPath: /var/lib/one/vms
+          subPath: vms
+        - name: shared
           mountPath: /var/tmp
           subPath: tmp
         - name: shared
