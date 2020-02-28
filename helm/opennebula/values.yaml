@@ -184,8 +184,8 @@ sched:
 
   configOverrides:
     LOG:
-      system: std
-      debug_level: 3
+      SYSTEM: file
+      DEBUG_LEVEL: 3
 
 # ------------------------------------------------------------------------------
 # OneHem server configuration
