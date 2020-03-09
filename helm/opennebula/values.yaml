@@ -66,7 +66,7 @@ oned:
 
   image:
     repository: docker.io/kvaps/opennebula
-    tag: v5.10.2
+    tag: v5.10.3
     pullPolicy: IfNotPresent
     pullSecrets:
     - name: regsecret
@@ -174,7 +174,7 @@ sched:
 
   image:
     repository: docker.io/kvaps/opennebula
-    tag: v5.10.2
+    tag: v5.10.3
     pullPolicy: IfNotPresent
     pullSecrets:
     - name: regsecret
@@ -206,7 +206,7 @@ hem:
 
   image:
     repository: docker.io/kvaps/opennebula
-    tag: v5.10.2
+    tag: v5.10.3
     pullPolicy: IfNotPresent
     pullSecrets:
     - name: regsecret
@@ -236,7 +236,7 @@ sunstone:
 
   image:
     repository: docker.io/kvaps/opennebula-sunstone
-    tag: v5.10.2
+    tag: v5.10.3
     pullPolicy: IfNotPresent
     pullSecrets:
     - name: regsecret
@@ -285,7 +285,7 @@ novnc:
 
   image:
     repository: docker.io/kvaps/opennebula-sunstone
-    tag: v5.10.2
+    tag: v5.10.3
     pullPolicy: IfNotPresent
     pullSecrets:
     - name: regsecret
@@ -364,7 +364,7 @@ gate:
 
   image:
     repository: docker.io/kvaps/opennebula-gate
-    tag: v5.10.2
+    tag: v5.10.3
     pullPolicy: IfNotPresent
     pullSecrets:
       - name: regsecret
@@ -414,7 +414,7 @@ flow:
 
   image:
     repository: docker.io/kvaps/opennebula-flow
-    tag: v5.10.2
+    tag: v5.10.3
     pullPolicy: IfNotPresent
     pullSecrets:
     - name: regsecret
@@ -450,7 +450,7 @@ exporter:
 
   image:
     repository: docker.io/kvaps/opennebula-exporter
-    tag: v5.10.2
+    tag: v5.10.3
     pullPolicy: IfNotPresent
     pullSecrets:
       - name: regsecret
