@@ -30,7 +30,8 @@ WORKDIR /opennebula-$VERSION
 
 # Apply patches
 RUN wget -q -O - https://github.com/OpenNebula/one/pull/3569.diff | patch -p1 \
- && wget -q -O - https://github.com/OpenNebula/one/pull/4324.diff | patch -p1
+ && wget -q -O - https://github.com/OpenNebula/one/pull/4324.diff | patch -p1 \
+ && wget -q -O - https://github.com/OpenNebula/one/pull/4330.diff | patch -p1
 
 # Build docs
 RUN cd share/man \
