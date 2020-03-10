@@ -39,7 +39,7 @@ spec:
       containers:
       {{- if and .Values.oned.db.enabled (eq .Values.oned.db.backend "mysql") }}
       - name: mysql
-        args: [ "--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci" ]
+        args: [ "--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci", "--skip-log-bin" ]
         image: {{ .Values.oned.db.image.repository }}:{{ .Values.oned.db.image.tag }}
         imagePullPolicy: {{ .Values.oned.db.image.pullPolicy }}
         volumeMounts:
