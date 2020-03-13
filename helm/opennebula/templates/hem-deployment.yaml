@@ -1,3 +1,4 @@
+{{- if not .Values.hem.integrated }}
 {{- if .Values.hem.enabled }}
 {{- $fullName := include "opennebula.fullname" . -}}
 ---
@@ -99,4 +100,5 @@ spec:
       {{- with .Values.hem.extraVolumes }}
       {{- toYaml . | nindent 6 }}
       {{- end }}
+{{- end }}
 {{- end }}

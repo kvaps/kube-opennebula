@@ -92,6 +92,10 @@ spec:
         - name: CREATE_CLUSTER
           value: '{{ if eq (printf "%T" .) "bool" }}{{ . | ternary 1 0 }}{{ else }}{{ . }}{{ end }}'
         {{- end }}
+        {{- if .Values.hem.enabled }}{{- with .Values.hem.integrated }}
+        - name: HEM_INTEGRATED
+          value: '{{ if eq (printf "%T" .) "bool" }}{{ . | ternary 1 0 }}{{ else }}{{ . }}{{ end }}'
+        {{- end }}{{- end }}
         {{ if ge (int .Values.oned.leaderId) 0 }}
         - name: LEADER_SERVER_ID
           value: '{{ .Values.oned.leaderId }}'
@@ -131,6 +135,11 @@ spec:
           subPath: {{ $key }}
         {{- end }}
         {{- end }}
+        {{- if .Values.hem.enabled }}{{- with .Values.hem.integrated }}
+        - name: hem-config
+          mountPath: /etc/one/onehem-server.conf
+          subPath: onehem-server.conf
+        {{- end }}{{- end }}
         - name: scripts
           mountPath: /scripts
         - name: one-keys
@@ -195,6 +204,11 @@ spec:
         secret:
           secretName: {{ $fullName }}-auth-config
       {{- end }}
+      {{- if .Values.hem.enabled }}{{- with .Values.hem.integrated }}
+      - name: hem-config
+        configMap:
+          name: {{ $fullName }}-hem
+      {{- end }}{{- end }}
       - name: scripts
         configMap:
           name: {{ $fullName }}-scripts

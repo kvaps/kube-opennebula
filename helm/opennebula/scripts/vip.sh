@@ -1,4 +1,17 @@
 #!/bin/bash
+
+# Workaround: https://github.com/OpenNebula/one/issues/4357
+if [ "$HEM_INTEGRATED" = 1 ]; then
+  case $2 in
+    leader)
+      onehem-server start
+    ;;
+    follower)
+      onehem-server stop
+    ;;
+  esac
+fi
+
 set -e
 echo -n "Setting pod/$HOSTNAME $1=$2 - "
 CA_CERT=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
