@@ -125,6 +125,9 @@ RUN apt-get -y update \
 # Fix permissions
 RUN chown -R oneadmin:oneadmin /etc/one
 
+# do not daemonize novnc-server
+RUN sed -i '/cmd *=/a\        exec(cmd)' /usr/lib/one/ruby/OpenNebulaVNC.rb
+
 # remove vcenter routes
 RUN sed -i '/- vcenter\|- nsx/d' /etc/one/sunstone-server.conf
 
