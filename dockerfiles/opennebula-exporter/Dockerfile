@@ -100,9 +100,12 @@ FROM ubuntu:18.04
 COPY --from=builder /opennebula-common_*.deb /ruby-opennebula_*_all.deb /opennebula-tools_*.deb /opennebula-rubygem*.deb /packages/
 RUN apt-get update \
  && apt-get -y install /packages/*.deb \
- && mkdir -p /var/log/one /var/lock/one \
+ && mkdir -p /var/log/one /var/lock/one /var/run/one \
  && apt-get -y clean \
- && chown oneadmin: /var/log/one /var/lock/one
+ && chown oneadmin: /var/log/one /var/lock/one /var/run/one /var/run/one
+
+# Logging to stdout
+RUN for i in oned.log sched.log onehem.log sunstone.log novnc.log onegate.log oneflow.log; do ln -sf "/proc/1/fd/1" "/var/log/one/$i"; done
 
 # ------------------------------------------------------------------------------
 # Specific part

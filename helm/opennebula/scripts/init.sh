@@ -240,8 +240,6 @@ bootstrap_cluster(){
    sleep 5
    until onezone list >/dev/null 2>&1; do
      if ! kill -0 "$ONED_PID" >/dev/null 2>&1; then
-       info "printing oned.log:"
-       cat /var/log/one/oned.log
        drop_db
        fatal "oned process is dead"
      fi
@@ -456,19 +454,9 @@ setup_config(){
   fi
 }
 
-# Sets up logging to temprorary file
+# Sets up logging to stdout
 setup_logging(){
-  rm -f /tmp/oned.log
-  touch /tmp/oned.log
-  ln -sf /tmp/oned.log /var/log/one/oned.log
-}
-
-# Redirects log to stdout (workaround for https://github.com/OpenNebula/one/issues/3900)
-print_logging(){
-  tail -F /tmp/oned.log 2>/dev/null &
-  while sleep 3600; do
-    echo -n > /tmp/oned.log
-  done &
+  for i in oned.log sched.log onehem.log sunstone.log novnc.log onegate.log oneflow.log; do ln -sf "/proc/1/fd/1" "/var/log/one/$i"; done
 }
 
 # Prints usage and exit
@@ -497,6 +485,7 @@ EOT
 init() {
   trap cleanup EXIT
   info "initializing"
+  setup_logging
   load_db_config
   load_federation_config
   load_version_info
@@ -592,8 +581,6 @@ main() {
         setup_keys
         setup_config db federation
       fi
-      setup_logging
-      print_logging
       info "starting opennebula"
       oned -f
       ;;
