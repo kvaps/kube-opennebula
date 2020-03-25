@@ -145,10 +145,10 @@ oned:
       DEBUG_LEVEL: 3
     RAFT_LEADER_HOOK:
       COMMAND: /scripts/vip.sh
-      ARGUMENTS: "role leader"
+      ARGUMENTS: leader
     RAFT_FOLLOWER_HOOK:
       COMMAND: /scripts/vip.sh
-      ARGUMENTS: "role follower"
+      ARGUMENTS: follower
   configAppends: {}
 
   # configuration from this section will be mapped to /etc/auth for oned

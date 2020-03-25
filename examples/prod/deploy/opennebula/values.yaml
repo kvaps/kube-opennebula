@@ -84,11 +84,10 @@ oned:
       ARGUMENTS: -t 15 -m http,s3,one,static
       EXECUTABLE: one_market
     RAFT_FOLLOWER_HOOK:
-
-      ARGUMENTS: role follower
+      ARGUMENTS: follower
       COMMAND: /scripts/vip.sh
     RAFT_LEADER_HOOK:
-      ARGUMENTS: role leader
+      ARGUMENTS: leader
       COMMAND: /scripts/vip.sh
     TM_MAD:
       ARGUMENTS: -t 15 -d dummy,lvm,shared,fs_lvm,qcow2,ssh,ceph,dev,vcenter,iscsi_libvirt,linstor_un
