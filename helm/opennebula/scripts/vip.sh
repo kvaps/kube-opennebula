@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -e -o pipefail
 CA_CERT=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
 TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
 NAMESPACE=$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace)
