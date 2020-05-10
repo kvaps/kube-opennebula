@@ -7,7 +7,7 @@
 FROM ubuntu:18.04 as builder
 
 # Setup environment variables
-ENV VERSION=5.10.4 \
+ENV VERSION=5.10.5 \
     PKG_VERSION=1 \
     CONTACT="Unsupported Community Build" \
     GIT_VERSION="not known" \
@@ -103,7 +103,6 @@ RUN apt-get -y update \
  && ln -s /bin/true /usr/local/bin/systemctl \
  && dpkg -i packages/opennebula-node_*.deb || true \
  && apt-get -yf install \
- && dpkg -l opennebula-node \
  && rm -f /usr/local/bin/systemctl \
  && rm -f /etc/libvirt/qemu/networks/autostart/default.xml \
  && apt-get -y clean

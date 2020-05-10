@@ -7,7 +7,7 @@
 FROM ubuntu:18.04 as builder
 
 # Setup environment variables
-ENV VERSION=5.10.4 \
+ENV VERSION=5.10.5 \
     PKG_VERSION=1 \
     CONTACT="Unsupported Community Build" \
     GIT_VERSION="not known" \

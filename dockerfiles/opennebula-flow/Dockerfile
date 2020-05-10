@@ -7,7 +7,7 @@
 FROM ubuntu:18.04 as builder
 
 # Setup environment variables
-ENV VERSION=5.10.4 \
+ENV VERSION=5.10.5 \
     PKG_VERSION=1 \
     CONTACT="Unsupported Community Build" \
     GIT_VERSION="not known" \
@@ -114,7 +114,6 @@ RUN apt-get -y update \
  && ln -s /bin/true /usr/bin/systemd-tmpfiles \
  && dpkg -i packages/opennebula-flow_*.deb || true \
  && apt-get -yf install \
- && dpkg -l opennebula-flow \
  && rm -f /usr/bin/systemd-tmpfiles \
  && apt-get -y clean
 
