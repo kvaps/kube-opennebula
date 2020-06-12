@@ -285,7 +285,7 @@ bootstrap_node(){
   info "downloading data from mysql://$DB_USER@$LEADER_IP:$DB_PORT/$DB_NAME"
   MYSQL_OPTS=$(mktemp)
   echo -e "[client]\npassword=$DB_PASSWD" > "$MYSQL_OPTS"
-  mysqldump --defaults-file="$MYSQL_OPTS" -u "$DB_USER" -h "$LEADER_IP" -P "$DB_PORT" "$DB_NAME" | \
+  mysqldump --defaults-file="$MYSQL_OPTS" --single-transaction=TRUE -u "$DB_USER" -h "$LEADER_IP" -P "$DB_PORT" "$DB_NAME" | \
     mysql --defaults-file="$MYSQL_OPTS" -u "$DB_USER" -h "$DB_SERVER" -P "$DB_PORT" "$DB_NAME"
   if [ $? -ne 0 ]; then
     fatal "can not bootstrap database"
@@ -308,7 +308,7 @@ bootstrap_node(){
     info "fetching server list for zone $FEDERATION_ZONE_ID from mysql://$DB_USER@$LEADER_IP:$DB_PORT/$DB_NAME"
     MYSQL_OPTS=$(mktemp)
     echo -e "[client]\npassword=$DB_PASSWD" > "$MYSQL_OPTS"
-    mysqldump --defaults-file="$MYSQL_OPTS" -u"$DB_USER" -h "$LEADER_IP" -P "$DB_PORT" "$DB_NAME" zone_pool --where="oid = $FEDERATION_ZONE_ID" --replace | \
+    mysqldump --defaults-file="$MYSQL_OPTS" --single-transaction=TRUE -u"$DB_USER" -h "$LEADER_IP" -P "$DB_PORT" "$DB_NAME" zone_pool --where="oid = $FEDERATION_ZONE_ID" --replace | \
       mysql --defaults-file="$MYSQL_OPTS" -u "$DB_USER" -h "$DB_SERVER" -P "$DB_PORT" "$DB_NAME"
     if [ $? -ne 0 ]; then
       drop_db
