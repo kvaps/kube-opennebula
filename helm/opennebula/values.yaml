@@ -184,7 +184,7 @@ sched:
 
   configOverrides:
     LOG:
-      SYSTEM: file
+      SYSTEM: std
       DEBUG_LEVEL: 3
 
 # ------------------------------------------------------------------------------
