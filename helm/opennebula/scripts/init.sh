@@ -294,8 +294,10 @@ bootstrap_node(){
   fi
   rm -f "$MYSQL_OPTS"
 
-  if [ -n "$(ONE_XMLRPC="$LEADER_XMLRPC" onezone show "$FEDERATION_ZONE_ID" -x | /var/lib/one/remotes/datastore/xpath.rb "/ZONE/SERVER_POOL/SERVER[NAME=\"$HOSTNAME\"]/NAME)" | tr -d '\0')" ]; then
-    info "$HOSTNAME already member of zone $FEDERATION_ZONE_ID"
+  MY_SERVER_ID="$(ONE_XMLRPC="$LEADER_XMLRPC" onezone show "$FEDERATION_ZONE_ID" -x | /var/lib/one/remotes/datastore/xpath.rb "/ZONE/SERVER_POOL/SERVER[NAME=\"$HOSTNAME\"]/ID)" | tr -d '\0')"
+  if [ -n "$MY_SERVER_ID" ]; then
+    info "$HOSTNAME already member of zone $FEDERATION_ZONE_ID, reseting"
+    ONE_XMLRPC="$LEADER_XMLRPC" onezone server-reset "$FEDERATION_ZONE_ID" "$MY_SERVER_ID"
   else
     info "adding $HOSTNAME to zone $FEDERATION_ZONE_ID via $LEADER_XMLRPC"
     MY_XMLRPC="http://$(hostname -f | cut -d. -f-2):${ONE_PORT}/RPC2"
