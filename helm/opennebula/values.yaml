@@ -100,6 +100,7 @@ oned:
     passwd:
     dbName: opennebula
     connections: 50
+    maxConnections: 150
     rootPasswd:
 
     image:

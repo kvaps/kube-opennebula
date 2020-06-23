@@ -39,7 +39,11 @@ spec:
       containers:
       {{- if and .Values.oned.db.enabled (eq .Values.oned.db.backend "mysql") }}
       - name: mysql
-        args: [ "--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci", "--skip-log-bin" ]
+        args: 
+        - --character-set-server=utf8mb4
+        - --collation-server=utf8mb4_unicode_ci
+        - --skip-log-bin
+        - --max-connections={{ .Values.oned.db.maxConnections }}
         image: {{ .Values.oned.db.image.repository }}:{{ .Values.oned.db.image.tag }}
         imagePullPolicy: {{ .Values.oned.db.image.pullPolicy }}
         volumeMounts:
@@ -116,6 +120,8 @@ spec:
               name: {{ $fullName }}-db-keys
         - name: DB_NAME
           value: {{ .Values.oned.db.dbName }}
+        - name: DB_CONNECTIONS
+          value: "{{ .Values.oned.db.connections }}"
         {{- with .Values.oned.extraEnv }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
