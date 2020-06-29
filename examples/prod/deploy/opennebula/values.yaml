@@ -14,7 +14,7 @@ oned:
 
   ingress:
     annotations:
-      certmanager.k8s.io/cluster-issuer: letsencrypt-prod
+      cert-manager.io/cluster-issuer: letsencrypt-prod
       kubernetes.io/ingress.class: nginx
     hosts:
       - opennebula.example.org
@@ -118,7 +118,7 @@ sunstone:
     repository: registry.example.org/kube-opennebula/opennebula-sunstone
   ingress:
     annotations:
-      certmanager.k8s.io/cluster-issuer: letsencrypt-prod
+      cert-manager.io/cluster-issuer': letsencrypt-prod
       kubernetes.io/ingress.class: nginx
     hosts:
       - opennebula.example.org
@@ -135,7 +135,7 @@ sunstone:
 gate:
   ingress:
     annotations:
-      certmanager.k8s.io/cluster-issuer: letsencrypt-prod
+      cert-manager.io/cluster-issuer': letsencrypt-prod
       kubernetes.io/ingress.class: nginx
     hosts:
       - gate.opennebula.example.org
@@ -149,7 +149,7 @@ novnc:
     repository: registry.example.org/kube-opennebula/opennebula-sunstone
   ingress:
     annotations:
-      certmanager.k8s.io/cluster-issuer: letsencrypt-prod
+      cert-manager.io/cluster-issuer': letsencrypt-prod
       kubernetes.io/ingress.class: nginx
     hosts:
       - opennebula.example.org
