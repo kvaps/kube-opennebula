@@ -100,9 +100,14 @@ oned:
     passwd:
     dbName: opennebula
     connections: 50
-    maxConnections: 150
     rootPasswd:
-
+    extraArgs:
+    - --character-set-server=utf8mb4
+    - --collation-server=utf8mb4_unicode_ci
+    - --skip-log-bin
+    #- --max-connections=150
+    #- --innodb-buffer-pool-size=8G
+    #- --innodb-buffer-pool-instances=16
     image:
       repository: docker.io/library/mysql
       tag: 8.0.19
