@@ -1,6 +1,7 @@
 name: opennebula
 description: OpenNebula cloud computing platform
-version: v1.1.0
+version: 1.1.0
+appVersion: 5.8.5
 keywords:
   - opennebula
   - virtualization
