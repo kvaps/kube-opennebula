@@ -13,13 +13,25 @@ Helm chart and OpenNebula images ready to deploy on Kubernetes
   ```bash
   kubectl create namespace opennebula
   ```
+
+* Install Helm repo:
+
+  ```bash
+  helm repo add kvaps https://kvaps.github.io/charts
+  ```
   
 * Deploy OpenNebula:
   
   ```bash
-  cp helm/opennebula/values.yaml values.yaml
-  vim values.yaml
-  helm install opennebula helm/opennebula -f values.yaml --set oned.createCluster=1 --wait
+  # download example values
+  helm show values kvaps/opennebula --version 1.1.0 > values.yaml
+
+  # install release
+  helm install opennebula kvaps/opennebula --version 1.1.0 \
+    --namespace opennebula \
+    --set oned.createCluster=1 \
+    -f values.yaml \
+    --wait
   ```
 
 ### Compute nodes
@@ -70,13 +82,21 @@ kubectl exec <leader_pod> -c oned -- bash -c 'mysqldump -h$DB_SERVER -u$DB_USER 
 
 Minor upgrade:
 ```bash
-helm upgrade opennebula helm/opennebula -f values.yaml -f secrets.yaml --wait
+helm upgrade opennebula kvaps/opennebula --version 1.1.0 \
+  --namespace opennebula \
+  -f values.yaml \
+  --wait
 ```
 
 Major upgrade:
 ```bash
 # Remove the chart
-helm remove opennebula opennebula
+helm remove opennebula \
+  --namespace opennebula
+
 # Deploy the new chart
-helm install opennebula opennebula -f values.yaml -f secrets.yaml --wait
+helm upgrade opennebula kvaps/opennebula --version 1.1.0 \
+  --namespace opennebula \
+  -f values.yaml \
+  --wait
 ```
