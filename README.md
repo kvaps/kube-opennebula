@@ -24,10 +24,10 @@ Helm chart and OpenNebula images ready to deploy on Kubernetes
   
   ```bash
   # download example values
-  helm show values kvaps/opennebula --version 1.1.0 > values.yaml
+  helm show values kvaps/opennebula --version 1.2.0 > values.yaml
 
   # install release
-  helm install opennebula kvaps/opennebula --version 1.1.0 \
+  helm install opennebula kvaps/opennebula --version 1.2.0 \
     --namespace opennebula \
     --set oned.createCluster=1 \
     -f values.yaml \
@@ -82,7 +82,7 @@ kubectl exec <leader_pod> -c oned -- bash -c 'mysqldump -h$DB_SERVER -u$DB_USER 
 
 Minor upgrade:
 ```bash
-helm upgrade opennebula kvaps/opennebula --version 1.1.0 \
+helm upgrade opennebula kvaps/opennebula --version 1.2.0 \
   --namespace opennebula \
   -f values.yaml \
   --wait
@@ -95,7 +95,7 @@ helm remove opennebula \
   --namespace opennebula
 
 # Deploy the new chart
-helm upgrade opennebula kvaps/opennebula --version 1.1.0 \
+helm upgrade opennebula kvaps/opennebula --version 1.2.0 \
   --namespace opennebula \
   -f values.yaml \
   --wait
