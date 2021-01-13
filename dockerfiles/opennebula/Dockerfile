@@ -23,7 +23,7 @@ RUN apt-get update \
 # Download sources
 RUN wget -q -O - https://github.com/OpenNebula/one/archive/release-$VERSION.tar.gz | tar xzf - \
  && mv /one-release-$VERSION /opennebula-$VERSION \
- && wget -q -O - https://github.com/OpenNebula/packages/archive/release-$VERSION.tar.gz | tar xzf - \
+ && wget -q -O - https://github.com/kvaps/packages/archive/release-$VERSION.tar.gz | tar xzf - \
  && mv /packages-release-$VERSION /packages-$VERSION
 
 WORKDIR /opennebula-$VERSION
