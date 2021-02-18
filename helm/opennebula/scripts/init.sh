@@ -358,7 +358,7 @@ wait_previous_host(){
   local RETRY=0
   if [ "$FEDERATION_SERVER_ID" != "0" ]; then
     PREVIOUS_HOSTNAME="${HOSTNAME%-*}-$((FEDERATION_SERVER_ID-1))"
-    until [[ "$(ONE_XMLRPC="$LEADER_XMLRPC" onezone show "$FEDERATION_ZONE_ID" -x | /var/lib/one/remotes/datastore/xpath.rb "/ZONE/SERVER_POOL/SERVER[NAME=\"$PREVIOUS_HOSTNAME\"]/STATE)" | tr -d '\0')" =~ ^(2|3)$ ]]; do
+    until [[ "$(ONE_XMLRPC="$LEADER_XMLRPC" onezone show "$FEDERATION_ZONE_ID" -x | /var/lib/one/remotes/datastore/xpath.rb "/ZONE/SERVER_POOL/SERVER[NAME=\"$PREVIOUS_HOSTNAME\"]/STATE)" | tr -d '\0')" =~ ^(0|2|3)$ ]]; do
       info "waiting until $PREVIOUS_HOSTNAME be deployed (try $((RETRY++)))"
       sleep 10
     done
