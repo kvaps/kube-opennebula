@@ -172,8 +172,9 @@ spec:
             command:
             - /usr/bin/onezone
             - list
-          initialDelaySeconds: 5
-          periodSeconds: 5
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 15
       {{- with .Values.oned.sidecars }}
       {{- toYaml . | nindent 6 }}
       {{- end }}
