@@ -10,10 +10,11 @@ metadata:
     {{- if .Values.oned.labels }}
     {{- toYaml .Values.oned.labels | nindent 4 }}
     {{- end }}
-  {{- with .Values.oned.annotations }}
   annotations:
+    kubectl.kubernetes.io/default-exec-container: oned
+    {{- with .Values.oned.annotations }}
     {{- toYaml . | nindent 4 }}
-  {{- end }}
+    {{- end }}
 
 spec:
   replicas: {{ .Values.oned.replicas }}
@@ -87,9 +88,8 @@ spec:
           containerPort: {{ .Values.oned.one_hm.subscriberPort }}
         - name: hm-replier
           containerPort: {{ .Values.oned.one_hm.replierPort }}
-        - name: collectd
-          containerPort: {{ .Values.oned.collectd.port }}
-          protocol: UDP
+        - name: monitord
+          containerPort: {{ .Values.oned.monitord.port }}
         env:
         {{- with .Values.oned.createCluster }}
         - name: CREATE_CLUSTER

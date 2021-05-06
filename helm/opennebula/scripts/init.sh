@@ -174,7 +174,7 @@ perform_upgrade() {
         return 0
         ;;
       mysql)
-        onedb upgrade -s /var/lib/one/one.db -p "$DB_PASSWD" -u "$DB_USER" -S "$DB_SERVER" -P "$DB_PORT" -d "$DB_NAME"
+        onedb upgrade -p "$DB_PASSWD" -u "$DB_USER" -S "$DB_SERVER" -P "$DB_PORT" -d "$DB_NAME"
         if [ $? -ne 0 ]; then
           fatal "failed upgrade database"
         fi

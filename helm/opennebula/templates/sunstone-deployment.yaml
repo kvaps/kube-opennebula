@@ -61,6 +61,9 @@ spec:
         - name: one-keys
           mountPath: /var/lib/one/.one/sunstone_auth
           subPath: sunstone_auth
+        - name: one-keys
+          mountPath: /var/lib/one/.one/one_auth
+          subPath: one_auth
         - name: shared
           mountPath: /var/tmp
           subPath: tmp

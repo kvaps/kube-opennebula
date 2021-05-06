@@ -87,11 +87,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ $fullName }}-oned-collectd
+  name: {{ $fullName }}-oned-monitord
   labels:
     app: {{ $fullName }}-oned
-    {{- if .Values.oned.collectd.service.labels }}
-    {{- toYaml .Values.oned.collectd.service.labels | nindent 4 }}
+    {{- if .Values.oned.monitord.service.labels }}
+    {{- toYaml .Values.oned.monitord.service.labels | nindent 4 }}
     {{- end }}
   {{- with .Values.oned.service.annotations }}
   annotations:
@@ -99,10 +99,9 @@ metadata:
   {{- end }}
 spec:
   ports:
-  - name: collectd
-    port: {{ .Values.oned.collectd.port }}
-    nodePort: {{ .Values.oned.collectd.service.nodePort }}
-    protocol: UDP
+  - name: monitord
+    port: {{ .Values.oned.monitord.port }}
+    nodePort: {{ .Values.oned.monitord.service.nodePort }}
   selector:
     app: {{ $fullName }}-oned
   type: NodePort

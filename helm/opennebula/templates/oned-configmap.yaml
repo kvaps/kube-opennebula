@@ -13,4 +13,9 @@ data:
     {{- $mergedConfig | nindent 4 }}
     {{- $appendConfig := include "opennebula.config" .Values.oned.configAppends | nindent 4 -}}
     {{- $appendConfig }}
+  monitord.conf: |+
+    {{- $mergedConfig := include "opennebula.config" (mergeOverwrite (fromYaml (tpl (.Files.Get "config/monitord.conf") .)) .Values.oned.monitord.configOverrides) -}}
+    {{- $mergedConfig | nindent 4 }}
+    {{- $appendConfig := include "opennebula.config" .Values.oned.monitord.configAppends | nindent 4 -}}
+    {{- $appendConfig }}
 {{- end }}

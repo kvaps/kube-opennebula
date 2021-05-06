@@ -65,8 +65,8 @@ oned:
   leaderId: -1
 
   image:
-    repository: docker.io/kvaps/opennebula
-    tag: v5.10.5
+    repository: ghcr.io/kvaps/opennebula
+    tag: v5.12.0.4
     pullPolicy: IfNotPresent
     pullSecrets:
     - name: regsecret
@@ -113,14 +113,16 @@ oned:
       tag: 8.0.19
       pullPolicy: IfNotPresent
 
-  # Specify nodePort for collectd service (30000-32767)
+  # Specify nodePort for monitord service (30000-32767)
   # port and nodePort should be the same
-  collectd:
-    port: 32155
+  monitord:
+    port: 32156 # TODO
     service:
       labels: {}
       annotations: {}
-      nodePort: 32155
+      nodePort: 32156 # TODO
+    configOverrides: {}
+    configAppends: {}
 
   # Specify nodePort for one_hm service
   one_hm:
@@ -146,6 +148,7 @@ oned:
       - opennebula.example.org
 
   configOverrides:
+    HOSTNAME: localhost #TODO
     LOG:
       SYSTEM: file
       DEBUG_LEVEL: 3
@@ -179,8 +182,8 @@ sched:
   replicas: 1
 
   image:
-    repository: docker.io/kvaps/opennebula
-    tag: v5.10.5
+    repository: ghcr.io/kvaps/opennebula
+    tag: v5.12.0.4
     pullPolicy: IfNotPresent
     pullSecrets:
     - name: regsecret
@@ -202,7 +205,7 @@ hem:
 
   # If true, the Hem-server be started on same place with oned by the leader-election hook
   # (workaround for https://github.com/OpenNebula/one/issues/4357)
-  integrated: true
+  integrated: false
 
   labels: {}
   annotations: {}
@@ -216,8 +219,8 @@ hem:
   replicas: 1
 
   image:
-    repository: docker.io/kvaps/opennebula
-    tag: v5.10.5
+    repository: ghcr.io/kvaps/opennebula
+    tag: v5.12.0.4
     pullPolicy: IfNotPresent
     pullSecrets:
     - name: regsecret
@@ -246,8 +249,8 @@ sunstone:
   replicas: 3
 
   image:
-    repository: docker.io/kvaps/opennebula-sunstone
-    tag: v5.10.5
+    repository: ghcr.io/kvaps/opennebula-sunstone
+    tag: v5.12.0.4
     pullPolicy: IfNotPresent
     pullSecrets:
     - name: regsecret
@@ -295,8 +298,8 @@ novnc:
   replicas: 1
 
   image:
-    repository: docker.io/kvaps/opennebula-sunstone
-    tag: v5.10.5
+    repository: ghcr.io/kvaps/opennebula-sunstone
+    tag: v5.12.0.4
     pullPolicy: IfNotPresent
     pullSecrets:
     - name: regsecret
@@ -374,8 +377,8 @@ gate:
   replicas: 1
 
   image:
-    repository: docker.io/kvaps/opennebula-gate
-    tag: v5.10.5
+    repository: ghcr.io/kvaps/opennebula-gate
+    tag: v5.12.0.4
     pullPolicy: IfNotPresent
     pullSecrets:
       - name: regsecret
@@ -424,8 +427,8 @@ flow:
   replicas: 1
 
   image:
-    repository: docker.io/kvaps/opennebula-flow
-    tag: v5.10.5
+    repository: ghcr.io/kvaps/opennebula-flow
+    tag: v5.12.0.4
     pullPolicy: IfNotPresent
     pullSecrets:
     - name: regsecret
@@ -460,8 +463,8 @@ exporter:
   replicas: 1
 
   image:
-    repository: docker.io/kvaps/opennebula-exporter
-    tag: v5.10.5
+    repository: ghcr.io/kvaps/opennebula-exporter
+    tag: v5.12.0.4
     pullPolicy: IfNotPresent
     pullSecrets:
       - name: regsecret
