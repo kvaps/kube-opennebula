@@ -24,8 +24,20 @@ RUN apt-get -y update \
  && apt-get -y clean \
  && rm -rf /var/lib/apt/lists/
 
-# Fix permissions
-RUN chown -R oneadmin:oneadmin /etc/one
+# Add missing migration packages
+RUN VERSION=5.12.0.4 \
+ && wget -q -O - https://github.com/OpenNebula/one/archive/release-$VERSION.tar.gz | \
+   tar -xzf - -C /usr/lib/one/ruby/onedb \
+   --strip-components 3 \
+   one-release-$VERSION/src/onedb/local \
+   one-release-$VERSION/src/onedb/shared
+
+# Fix permissions and cleanup
+RUN chown -R oneadmin:oneadmin /etc/one \
+ && rm -f /var/lib/one/.one/one_auth \
+      /var/lib/one/.ssh/authorized_keys \
+      /var/lib/one/.ssh/id_rsa \
+      /var/lib/one/.ssh/id_rsa.pub
 
 USER oneadmin
 ENTRYPOINT [ "/usr/bin/oned", "-f" ]
