@@ -23,6 +23,8 @@ spec:
       app: {{ $fullName }}-oned
   serviceName: {{ $fullName }}-oned-servers
   podManagementPolicy: Parallel
+  updateStrategy:
+    type: RollingUpdate
   template:
     metadata:
       labels:
@@ -167,6 +169,7 @@ spec:
         {{- with .Values.oned.extraVolumeMounts }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
+        {{ if not .Values.oned.debug }}
         readinessProbe:
           exec:
             command:
@@ -175,6 +178,7 @@ spec:
           initialDelaySeconds: 30
           periodSeconds: 30
           timeoutSeconds: 15
+        {{ end }}
       {{- with .Values.oned.sidecars }}
       {{- toYaml . | nindent 6 }}
       {{- end }}
