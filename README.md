@@ -90,16 +90,10 @@ then disable debug
 
 ## Upgrade notes
 
-The minor upgrades can be performed by standard way using rolling update, however major updates should be performed by fully chart reinstallation.
-You have to remove the old chart, and install new one, however your data should be saved on persistent volumes, thus new images will perform database migration on their first start.
+The minor upgrades can be performed by standard way using rolling update, however major updates must be performed by fully chart reinstallation.  
+You have to remove the old chart, and install new one. No worry as your data should be saved on persistent volumes, thus new images will perform database migration on their first start.
 
-Perform backup:
-```bash
-# Find the leader pod
-kubectl get pod -l role=leader
-# Perform the backup
-kubectl exec <leader_pod> -c oned -- bash -c 'mysqldump -h$DB_SERVER -u$DB_USER -p$DB_PASSWORD $DB_NAME | gzip -9' > backup.sql.gz
-```
+> **Warning:** Don't forget to make backup before the upgrade!
 
 Minor upgrade:
 ```bash
