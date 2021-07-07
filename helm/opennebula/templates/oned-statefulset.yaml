@@ -135,6 +135,9 @@ spec:
         {{- end }}
         - name: config
           mountPath: /config
+        - name: config
+          mountPath: /etc/one/monitord.conf
+          subPath: monitord.conf
         {{- with .Values.oned.authConfig }}
         {{- range $key, $value := . }}
         - name: auth-config
