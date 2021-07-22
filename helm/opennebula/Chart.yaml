@@ -1,7 +1,7 @@
 name: opennebula
 description: OpenNebula cloud computing platform
-version: 1.2.0
-appVersion: 5.8.5
+version: 2.0.0
+appVersion: 5.12.0.4
 icon: https://upload.wikimedia.org/wikipedia/en/thumb/9/9f/OpenNebula-logo.svg/330px-OpenNebula-logo.svg.png
 keywords:
   - opennebula
@@ -9,11 +9,6 @@ keywords:
 home: https://github.com/kvaps/kube-opennebula
 sources:
   - https://github.com/kvaps/kube-opennebula
-  - https://hub.docker.com/r/kvaps/opennebula
-  - https://hub.docker.com/r/kvaps/opennebula-flow
-  - https://hub.docker.com/r/kvaps/opennebula-gate
-  - https://hub.docker.com/r/kvaps/opennebula-node
-  - https://hub.docker.com/r/kvaps/opennebula-sunstone
 maintainers:
   - name: kvaps
     email: kvapss@gmail.com
