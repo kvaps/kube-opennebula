@@ -120,7 +120,7 @@ spec:
           claimName: {{ $fullName }}-shared
           {{- end }}
         {{- else }}
-        emptyDir:
+        emptyDir: {}
         {{- end }}
       {{- with .Values.novnc.extraVolumes }}
       {{- toYaml . | nindent 6 }}

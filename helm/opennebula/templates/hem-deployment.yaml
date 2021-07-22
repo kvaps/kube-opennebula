@@ -54,6 +54,8 @@ spec:
         - mountPath: /etc/one/onehem-server.conf
           name: config
           subPath: onehem-server.conf
+        - name: one-run
+          mountPath: /run/one
         - name: one-keys
           mountPath: /var/lib/one/.one/one_auth
           subPath: one_auth
@@ -113,6 +115,8 @@ spec:
       - name: config
         configMap:
           name: {{ $fullName }}-hem
+      - name: one-run
+        emptyDir: {}
       - name: ssh-keys
         secret:
           secretName: {{ $fullName }}-ssh-keys

@@ -152,6 +152,8 @@ spec:
         {{- end }}{{- end }}
         - name: scripts
           mountPath: /scripts
+        - name: one-run
+          mountPath: /run/one
         - name: one-keys
           mountPath: /secrets
         - name: ssh-keys
@@ -255,6 +257,8 @@ spec:
       - name: one-keys
         secret:
           secretName: {{ $fullName }}-one-keys
+      - name: one-run
+        emptyDir: {}
       - name: data
         {{- if .Values.persistence.data.enabled }}
         persistentVolumeClaim:
@@ -264,7 +268,7 @@ spec:
           claimName: {{ $fullName }}-data
           {{- end }}
         {{- else }}
-        emptyDir:
+        emptyDir: {}
         {{- end }}
       - name: shared
         {{- if .Values.persistence.shared.enabled }}
@@ -275,7 +279,7 @@ spec:
           claimName: {{ $fullName }}-shared
           {{- end }}
         {{- else }}
-        emptyDir:
+        emptyDir: {}
         {{- end }}
       {{- with .Values.oned.extraVolumes }}
       {{- toYaml . | nindent 6 }}

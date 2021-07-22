@@ -145,7 +145,7 @@ spec:
           claimName: {{ $fullName }}-shared
           {{- end }}
         {{- else }}
-        emptyDir:
+        emptyDir: {}
         {{- end }}
       {{- with .Values.sunstone.extraVolumes }}
       {{- toYaml . | nindent 6 }}
