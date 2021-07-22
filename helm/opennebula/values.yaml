@@ -211,7 +211,7 @@ hem:
 
   # If true, the Hem-server be started on same place with oned by the leader-election hook
   # (workaround for https://github.com/OpenNebula/one/issues/4357)
-  integrated: false
+  integrated: true
 
   labels: {}
   annotations: {}
