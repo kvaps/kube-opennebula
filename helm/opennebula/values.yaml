@@ -65,14 +65,17 @@ oned:
   leaderId: -1
 
   image:
-    repository: docker.io/kvaps/opennebula
-    tag: v5.10.5
+    repository: ghcr.io/kvaps/opennebula
+    tag: v5.12.0.4
     pullPolicy: IfNotPresent
     pullSecrets:
     - name: regsecret
 
   nodeSelector: {}
   tolerations: []
+  podAntiAffinity: soft
+  podAntiAffinityTopologyKey: kubernetes.io/hostname
+  affinity: {}
 
   # Specify passwords for default accounts
   oneadminPasswd:
@@ -113,14 +116,16 @@ oned:
       tag: 8.0.19
       pullPolicy: IfNotPresent
 
-  # Specify nodePort for collectd service (30000-32767)
+  # Specify nodePort for monitord service (30000-32767)
   # port and nodePort should be the same
-  collectd:
-    port: 32155
+  monitord:
+    port: 32156 # TODO
     service:
       labels: {}
       annotations: {}
-      nodePort: 32155
+      nodePort: 32156 # TODO
+    configOverrides: {}
+    configAppends: {}
 
   # Specify nodePort for one_hm service
   one_hm:
@@ -146,6 +151,7 @@ oned:
       - opennebula.example.org
 
   configOverrides:
+    HOSTNAME: localhost #TODO
     LOG:
       SYSTEM: file
       DEBUG_LEVEL: 3
@@ -179,14 +185,17 @@ sched:
   replicas: 1
 
   image:
-    repository: docker.io/kvaps/opennebula
-    tag: v5.10.5
+    repository: ghcr.io/kvaps/opennebula
+    tag: v5.12.0.4
     pullPolicy: IfNotPresent
     pullSecrets:
     - name: regsecret
 
   nodeSelector: {}
   tolerations: []
+  podAntiAffinity: soft
+  podAntiAffinityTopologyKey: kubernetes.io/hostname
+  affinity: {}
 
   configOverrides:
     LOG:
@@ -216,14 +225,17 @@ hem:
   replicas: 1
 
   image:
-    repository: docker.io/kvaps/opennebula
-    tag: v5.10.5
+    repository: ghcr.io/kvaps/opennebula
+    tag: v5.12.0.4
     pullPolicy: IfNotPresent
     pullSecrets:
     - name: regsecret
 
   nodeSelector: {}
   tolerations: []
+  podAntiAffinity: soft
+  podAntiAffinityTopologyKey: kubernetes.io/hostname
+  affinity: {}
 
   configOverrides:
     :debug_level: 3
@@ -246,8 +258,8 @@ sunstone:
   replicas: 3
 
   image:
-    repository: docker.io/kvaps/opennebula-sunstone
-    tag: v5.10.5
+    repository: ghcr.io/kvaps/opennebula-sunstone
+    tag: v5.12.0.4
     pullPolicy: IfNotPresent
     pullSecrets:
     - name: regsecret
@@ -295,11 +307,18 @@ novnc:
   replicas: 1
 
   image:
-    repository: docker.io/kvaps/opennebula-sunstone
-    tag: v5.10.5
+    repository: ghcr.io/kvaps/opennebula-sunstone
+    tag: v5.12.0.4
     pullPolicy: IfNotPresent
     pullSecrets:
     - name: regsecret
+
+  nodeSelector: {}
+  tolerations: []
+  podAntiAffinity: soft
+  podAntiAffinityTopologyKey: kubernetes.io/hostname
+  affinity: {}
+
 
   port: 29876
   service:
@@ -349,6 +368,9 @@ memcached:
 
   nodeSelector: {}
   tolerations: []
+  podAntiAffinity: soft
+  podAntiAffinityTopologyKey: kubernetes.io/hostname
+  affinity: {}
 
   port: 11211
   service:
@@ -374,14 +396,17 @@ gate:
   replicas: 1
 
   image:
-    repository: docker.io/kvaps/opennebula-gate
-    tag: v5.10.5
+    repository: ghcr.io/kvaps/opennebula-gate
+    tag: v5.12.0.4
     pullPolicy: IfNotPresent
     pullSecrets:
       - name: regsecret
 
   nodeSelector: {}
   tolerations: []
+  podAntiAffinity: soft
+  podAntiAffinityTopologyKey: kubernetes.io/hostname
+  affinity: {}
 
   port: 5030
   service:
@@ -424,14 +449,17 @@ flow:
   replicas: 1
 
   image:
-    repository: docker.io/kvaps/opennebula-flow
-    tag: v5.10.5
+    repository: ghcr.io/kvaps/opennebula-flow
+    tag: v5.12.0.4
     pullPolicy: IfNotPresent
     pullSecrets:
     - name: regsecret
 
   nodeSelector: {}
   tolerations: []
+  podAntiAffinity: soft
+  podAntiAffinityTopologyKey: kubernetes.io/hostname
+  affinity: {}
 
   port: 2474
   service:
@@ -460,14 +488,17 @@ exporter:
   replicas: 1
 
   image:
-    repository: docker.io/kvaps/opennebula-exporter
-    tag: v5.10.5
+    repository: ghcr.io/kvaps/opennebula-exporter
+    tag: v5.12.0.4
     pullPolicy: IfNotPresent
     pullSecrets:
       - name: regsecret
 
   nodeSelector: {}
   tolerations: []
+  podAntiAffinity: soft
+  podAntiAffinityTopologyKey: kubernetes.io/hostname
+  affinity: {}
 
   port: 9100
   telemetryPath: /metrics

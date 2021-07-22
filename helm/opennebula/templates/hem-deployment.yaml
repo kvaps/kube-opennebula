@@ -54,6 +54,8 @@ spec:
         - mountPath: /etc/one/onehem-server.conf
           name: config
           subPath: onehem-server.conf
+        - name: one-run
+          mountPath: /run/one
         - name: one-keys
           mountPath: /var/lib/one/.one/one_auth
           subPath: one_auth
@@ -64,6 +66,29 @@ spec:
         {{- end }}
       {{- with .Values.hem.sidecars }}
       {{- toYaml . | nindent 6 }}
+      {{- end }}
+      {{- if or .Values.hem.affinity .Values.hem.podAntiAffinity }}
+      affinity:
+        {{- with .Values.hem.affinity }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- if eq .Values.hem.podAntiAffinity "hard" }}
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - topologyKey: "{{ .Values.hem.podAntiAffinityTopologyKey }}"
+              labelSelector:
+                matchLabels:
+                  app: {{ $fullName }}-hem
+        {{- else if eq .Values.hem.podAntiAffinity "soft" }}
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              podAffinityTerm:
+                topologyKey: "{{ .Values.hem.podAntiAffinityTopologyKey }}"
+                labelSelector:
+                  matchLabels:
+                    app: {{ $fullName }}-hem
+        {{- end }}
       {{- end }}
       {{- with .Values.hem.image.pullSecrets }}
       imagePullSecrets:
@@ -90,6 +115,8 @@ spec:
       - name: config
         configMap:
           name: {{ $fullName }}-hem
+      - name: one-run
+        emptyDir: {}
       - name: ssh-keys
         secret:
           secretName: {{ $fullName }}-ssh-keys

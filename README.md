@@ -90,16 +90,29 @@ then disable debug
 
 ## Upgrade notes
 
-The minor upgrades can be performed by standard way using rolling update, however major updates should be performed by fully chart reinstallation.
-You have to remove the old chart, and install new one, however your data should be saved on persistent volumes, thus new images will perform database migration on their first start.
+```
+kubectl get pod -n opennebula -l role=leader
+```
 
 Perform backup:
-```bash
-# Find the leader pod
-kubectl get pod -l role=leader
-# Perform the backup
-kubectl exec <leader_pod> -c oned -- bash -c 'mysqldump -h$DB_SERVER -u$DB_USER -p$DB_PASSWORD $DB_NAME | gzip -9' > backup.sql.gz
 ```
+kubectl exec -n opennebula -c oned <leader_pod> -- sh -c 'mysqldump -h$DB_SERVER -u$DB_USER -p$DB_PASSWD $DB_NAME | gzip -9' > opennebula-db.sql.gz
+```
+
+**To restore**, redeploy release with `--set oned.debug=true` and:
+```
+kubectl exec -n opennebula -i -c oned <each_oned_pod> -- sh -c 'zcat | mysql -h$DB_SERVER -u$DB_USER -p$DB_PASSWD -D$DB_NAME' < opennebula-db.sql.gz
+```
+
+then disable debug
+
+
+## Upgrade notes
+
+The minor upgrades can be performed by standard way using rolling update, however major updates must be performed by fully chart reinstallation.  
+You have to remove the old chart, and install new one. No worry as your data should be saved on persistent volumes, thus new images will perform database migration on their first start.
+
+> **Warning:** Don't forget to make backup before the upgrade!
 
 Minor upgrade:
 ```bash

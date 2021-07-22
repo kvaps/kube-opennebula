@@ -61,6 +61,9 @@ spec:
         - name: one-keys
           mountPath: /var/lib/one/.one/sunstone_auth
           subPath: sunstone_auth
+        - name: one-keys
+          mountPath: /var/lib/one/.one/one_auth
+          subPath: one_auth
         - name: shared
           mountPath: /var/tmp
           subPath: tmp
@@ -81,6 +84,29 @@ spec:
           periodSeconds: 5
       {{- with .Values.flow.sidecars }}
       {{- toYaml . | nindent 6 }}
+      {{- end }}
+      {{- if or .Values.sunstone.affinity .Values.sunstone.podAntiAffinity }}
+      affinity:
+        {{- with .Values.sunstone.affinity }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- if eq .Values.sunstone.podAntiAffinity "hard" }}
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - topologyKey: "{{ .Values.sunstone.podAntiAffinityTopologyKey }}"
+              labelSelector:
+                matchLabels:
+                  app: {{ $fullName }}-sunstone
+        {{- else if eq .Values.sunstone.podAntiAffinity "soft" }}
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              podAffinityTerm:
+                topologyKey: "{{ .Values.sunstone.podAntiAffinityTopologyKey }}"
+                labelSelector:
+                  matchLabels:
+                    app: {{ $fullName }}-sunstone
+        {{- end }}
       {{- end }}
       {{- with .Values.sunstone.image.pullSecrets }}
       imagePullSecrets:
@@ -119,7 +145,7 @@ spec:
           claimName: {{ $fullName }}-shared
           {{- end }}
         {{- else }}
-        emptyDir:
+        emptyDir: {}
         {{- end }}
       {{- with .Values.sunstone.extraVolumes }}
       {{- toYaml . | nindent 6 }}

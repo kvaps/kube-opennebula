@@ -60,6 +60,29 @@ spec:
       {{- with .Values.sched.sidecars }}
       {{- toYaml . | nindent 6 }}
       {{- end }}
+      {{- if or .Values.sched.affinity .Values.sched.podAntiAffinity }}
+      affinity:
+        {{- with .Values.sched.affinity }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- if eq .Values.sched.podAntiAffinity "hard" }}
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - topologyKey: "{{ .Values.sched.podAntiAffinityTopologyKey }}"
+              labelSelector:
+                matchLabels:
+                  app: {{ $fullName }}-sched
+        {{- else if eq .Values.sched.podAntiAffinity "soft" }}
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              podAffinityTerm:
+                topologyKey: "{{ .Values.sched.podAntiAffinityTopologyKey }}"
+                labelSelector:
+                  matchLabels:
+                    app: {{ $fullName }}-sched
+        {{- end }}
+      {{- end }}
       {{- with .Values.sched.image.pullSecrets }}
       imagePullSecrets:
       {{- toYaml . | nindent 6 }}

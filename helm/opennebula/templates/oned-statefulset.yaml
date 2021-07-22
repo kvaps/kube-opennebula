@@ -10,10 +10,11 @@ metadata:
     {{- if .Values.oned.labels }}
     {{- toYaml .Values.oned.labels | nindent 4 }}
     {{- end }}
-  {{- with .Values.oned.annotations }}
   annotations:
+    kubectl.kubernetes.io/default-exec-container: oned
+    {{- with .Values.oned.annotations }}
     {{- toYaml . | nindent 4 }}
-  {{- end }}
+    {{- end }}
 
 spec:
   replicas: {{ .Values.oned.replicas }}
@@ -89,9 +90,8 @@ spec:
           containerPort: {{ .Values.oned.one_hm.subscriberPort }}
         - name: hm-replier
           containerPort: {{ .Values.oned.one_hm.replierPort }}
-        - name: collectd
-          containerPort: {{ .Values.oned.collectd.port }}
-          protocol: UDP
+        - name: monitord
+          containerPort: {{ .Values.oned.monitord.port }}
         env:
         {{- with .Values.oned.createCluster }}
         - name: CREATE_CLUSTER
@@ -135,6 +135,9 @@ spec:
         {{- end }}
         - name: config
           mountPath: /config
+        - name: config
+          mountPath: /etc/one/monitord.conf
+          subPath: monitord.conf
         {{- with .Values.oned.authConfig }}
         {{- range $key, $value := . }}
         - name: auth-config
@@ -149,6 +152,8 @@ spec:
         {{- end }}{{- end }}
         - name: scripts
           mountPath: /scripts
+        - name: one-run
+          mountPath: /run/one
         - name: one-keys
           mountPath: /secrets
         - name: ssh-keys
@@ -182,8 +187,30 @@ spec:
       {{- with .Values.oned.sidecars }}
       {{- toYaml . | nindent 6 }}
       {{- end }}
-
       terminationGracePeriodSeconds: 30
+      {{- if or .Values.oned.affinity .Values.oned.podAntiAffinity }}
+      affinity:
+        {{- with .Values.oned.affinity }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- if eq .Values.oned.podAntiAffinity "hard" }}
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - topologyKey: "{{ .Values.oned.podAntiAffinityTopologyKey }}"
+              labelSelector:
+                matchLabels:
+                  app: {{ $fullName }}-oned
+        {{- else if eq .Values.oned.podAntiAffinity "soft" }}
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              podAffinityTerm:
+                topologyKey: "{{ .Values.oned.podAntiAffinityTopologyKey }}"
+                labelSelector:
+                  matchLabels:
+                    app: {{ $fullName }}-oned
+        {{- end }}
+      {{- end }}
       {{- with .Values.oned.image.pullSecrets }}
       imagePullSecrets:
       {{- toYaml . | nindent 6 }}
@@ -230,6 +257,8 @@ spec:
       - name: one-keys
         secret:
           secretName: {{ $fullName }}-one-keys
+      - name: one-run
+        emptyDir: {}
       - name: data
         {{- if .Values.persistence.data.enabled }}
         persistentVolumeClaim:
@@ -239,7 +268,7 @@ spec:
           claimName: {{ $fullName }}-data
           {{- end }}
         {{- else }}
-        emptyDir:
+        emptyDir: {}
         {{- end }}
       - name: shared
         {{- if .Values.persistence.shared.enabled }}
@@ -250,7 +279,7 @@ spec:
           claimName: {{ $fullName }}-shared
           {{- end }}
         {{- else }}
-        emptyDir:
+        emptyDir: {}
         {{- end }}
       {{- with .Values.oned.extraVolumes }}
       {{- toYaml . | nindent 6 }}

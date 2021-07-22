@@ -63,6 +63,29 @@ spec:
       {{- with .Values.gate.sidecars }}
       {{- toYaml . | nindent 6 }}
       {{- end }}
+      {{- if or .Values.gate.affinity .Values.gate.podAntiAffinity }}
+      affinity:
+        {{- with .Values.gate.affinity }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- if eq .Values.gate.podAntiAffinity "hard" }}
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - topologyKey: "{{ .Values.gate.podAntiAffinityTopologyKey }}"
+              labelSelector:
+                matchLabels:
+                  app: {{ $fullName }}-gate
+        {{- else if eq .Values.gate.podAntiAffinity "soft" }}
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              podAffinityTerm:
+                topologyKey: "{{ .Values.gate.podAntiAffinityTopologyKey }}"
+                labelSelector:
+                  matchLabels:
+                    app: {{ $fullName }}-gate
+        {{- end }}
+      {{- end }}
       {{- with .Values.gate.image.pullSecrets }}
       imagePullSecrets:
       {{- toYaml . | nindent 6 }}

@@ -72,6 +72,29 @@ spec:
       {{- with .Values.exporter.sidecars }}
       {{- toYaml . | nindent 6 }}
       {{- end }}
+      {{- if or .Values.exporter.affinity .Values.exporter.podAntiAffinity }}
+      affinity:
+        {{- with .Values.exporter.affinity }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- if eq .Values.exporter.podAntiAffinity "hard" }}
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - topologyKey: "{{ .Values.exporter.podAntiAffinityTopologyKey }}"
+              labelSelector:
+                matchLabels:
+                  app: {{ $fullName }}-exporter
+        {{- else if eq .Values.exporter.podAntiAffinity "soft" }}
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              podAffinityTerm:
+                topologyKey: "{{ .Values.exporter.podAntiAffinityTopologyKey }}"
+                labelSelector:
+                  matchLabels:
+                    app: {{ $fullName }}-exporter
+        {{- end }}
+      {{- end }}
       {{- with .Values.exporter.image.pullSecrets }}
       imagePullSecrets:
       {{- toYaml . | nindent 6 }}
