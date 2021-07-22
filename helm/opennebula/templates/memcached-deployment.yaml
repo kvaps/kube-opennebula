@@ -59,6 +59,29 @@ spec:
       {{- with .Values.memcached.sidecars }}
       {{- toYaml . | nindent 6 }}
       {{- end }}
+      {{- if or .Values.memcached.affinity .Values.memcached.podAntiAffinity }}
+      affinity:
+        {{- with .Values.memcached.affinity }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- if eq .Values.memcached.podAntiAffinity "hard" }}
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - topologyKey: "{{ .Values.memcached.podAntiAffinityTopologyKey }}"
+              labelSelector:
+                matchLabels:
+                  app: {{ $fullName }}-memcached
+        {{- else if eq .Values.memcached.podAntiAffinity "soft" }}
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              podAffinityTerm:
+                topologyKey: "{{ .Values.memcached.podAntiAffinityTopologyKey }}"
+                labelSelector:
+                  matchLabels:
+                    app: {{ $fullName }}-memcached
+        {{- end }}
+      {{- end }}
       {{- with .Values.memcached.image.pullSecrets }}
       imagePullSecrets:
       {{- toYaml . | nindent 6 }}

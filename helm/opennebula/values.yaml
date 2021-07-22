@@ -73,6 +73,9 @@ oned:
 
   nodeSelector: {}
   tolerations: []
+  podAntiAffinity: soft
+  podAntiAffinityTopologyKey: kubernetes.io/hostname
+  affinity: {}
 
   # Specify passwords for default accounts
   oneadminPasswd:
@@ -190,6 +193,9 @@ sched:
 
   nodeSelector: {}
   tolerations: []
+  podAntiAffinity: soft
+  podAntiAffinityTopologyKey: kubernetes.io/hostname
+  affinity: {}
 
   configOverrides:
     LOG:
@@ -227,6 +233,9 @@ hem:
 
   nodeSelector: {}
   tolerations: []
+  podAntiAffinity: soft
+  podAntiAffinityTopologyKey: kubernetes.io/hostname
+  affinity: {}
 
   configOverrides:
     :debug_level: 3
@@ -304,6 +313,13 @@ novnc:
     pullSecrets:
     - name: regsecret
 
+  nodeSelector: {}
+  tolerations: []
+  podAntiAffinity: soft
+  podAntiAffinityTopologyKey: kubernetes.io/hostname
+  affinity: {}
+
+
   port: 29876
   service:
     labels: {}
@@ -352,6 +368,9 @@ memcached:
 
   nodeSelector: {}
   tolerations: []
+  podAntiAffinity: soft
+  podAntiAffinityTopologyKey: kubernetes.io/hostname
+  affinity: {}
 
   port: 11211
   service:
@@ -385,6 +404,9 @@ gate:
 
   nodeSelector: {}
   tolerations: []
+  podAntiAffinity: soft
+  podAntiAffinityTopologyKey: kubernetes.io/hostname
+  affinity: {}
 
   port: 5030
   service:
@@ -435,6 +457,9 @@ flow:
 
   nodeSelector: {}
   tolerations: []
+  podAntiAffinity: soft
+  podAntiAffinityTopologyKey: kubernetes.io/hostname
+  affinity: {}
 
   port: 2474
   service:
@@ -471,6 +496,9 @@ exporter:
 
   nodeSelector: {}
   tolerations: []
+  podAntiAffinity: soft
+  podAntiAffinityTopologyKey: kubernetes.io/hostname
+  affinity: {}
 
   port: 9100
   telemetryPath: /metrics

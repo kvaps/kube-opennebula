@@ -185,8 +185,30 @@ spec:
       {{- with .Values.oned.sidecars }}
       {{- toYaml . | nindent 6 }}
       {{- end }}
-
       terminationGracePeriodSeconds: 30
+      {{- if or .Values.oned.affinity .Values.oned.podAntiAffinity }}
+      affinity:
+        {{- with .Values.oned.affinity }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- if eq .Values.oned.podAntiAffinity "hard" }}
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - topologyKey: "{{ .Values.oned.podAntiAffinityTopologyKey }}"
+              labelSelector:
+                matchLabels:
+                  app: {{ $fullName }}-oned
+        {{- else if eq .Values.oned.podAntiAffinity "soft" }}
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              podAffinityTerm:
+                topologyKey: "{{ .Values.oned.podAntiAffinityTopologyKey }}"
+                labelSelector:
+                  matchLabels:
+                    app: {{ $fullName }}-oned
+        {{- end }}
+      {{- end }}
       {{- with .Values.oned.image.pullSecrets }}
       imagePullSecrets:
       {{- toYaml . | nindent 6 }}

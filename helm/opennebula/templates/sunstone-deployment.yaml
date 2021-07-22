@@ -85,6 +85,29 @@ spec:
       {{- with .Values.flow.sidecars }}
       {{- toYaml . | nindent 6 }}
       {{- end }}
+      {{- if or .Values.sunstone.affinity .Values.sunstone.podAntiAffinity }}
+      affinity:
+        {{- with .Values.sunstone.affinity }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- if eq .Values.sunstone.podAntiAffinity "hard" }}
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - topologyKey: "{{ .Values.sunstone.podAntiAffinityTopologyKey }}"
+              labelSelector:
+                matchLabels:
+                  app: {{ $fullName }}-sunstone
+        {{- else if eq .Values.sunstone.podAntiAffinity "soft" }}
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              podAffinityTerm:
+                topologyKey: "{{ .Values.sunstone.podAntiAffinityTopologyKey }}"
+                labelSelector:
+                  matchLabels:
+                    app: {{ $fullName }}-sunstone
+        {{- end }}
+      {{- end }}
       {{- with .Values.sunstone.image.pullSecrets }}
       imagePullSecrets:
       {{- toYaml . | nindent 6 }}

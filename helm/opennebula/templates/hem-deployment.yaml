@@ -65,6 +65,29 @@ spec:
       {{- with .Values.hem.sidecars }}
       {{- toYaml . | nindent 6 }}
       {{- end }}
+      {{- if or .Values.hem.affinity .Values.hem.podAntiAffinity }}
+      affinity:
+        {{- with .Values.hem.affinity }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- if eq .Values.hem.podAntiAffinity "hard" }}
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - topologyKey: "{{ .Values.hem.podAntiAffinityTopologyKey }}"
+              labelSelector:
+                matchLabels:
+                  app: {{ $fullName }}-hem
+        {{- else if eq .Values.hem.podAntiAffinity "soft" }}
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              podAffinityTerm:
+                topologyKey: "{{ .Values.hem.podAntiAffinityTopologyKey }}"
+                labelSelector:
+                  matchLabels:
+                    app: {{ $fullName }}-hem
+        {{- end }}
+      {{- end }}
       {{- with .Values.hem.image.pullSecrets }}
       imagePullSecrets:
       {{- toYaml . | nindent 6 }}

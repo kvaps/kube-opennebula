@@ -1,4 +1,4 @@
-{{- if .Values.sunstone.enabled }}
+{{- if .Values.novnc.enabled }}
 {{- $fullName := include "opennebula.fullname" . -}}
 ---
 apiVersion: apps/v1
@@ -35,8 +35,8 @@ spec:
     spec:
       containers:
       - name: novnc
-        image: {{ .Values.sunstone.image.repository }}:{{ .Values.sunstone.image.tag }}
-        imagePullPolicy: {{ .Values.sunstone.image.pullPolicy }}
+        image: {{ .Values.novnc.image.repository }}:{{ .Values.novnc.image.tag }}
+        imagePullPolicy: {{ .Values.novnc.image.pullPolicy }}
         command: [ '/usr/bin/ruby', '/usr/bin/novnc-server', 'start' ]
         ports:
         - name: websocket
@@ -63,15 +63,38 @@ spec:
       {{- with .Values.novnc.sidecars }}
       {{- toYaml . | nindent 6 }}
       {{- end }}
-      {{- with .Values.sunstone.image.pullSecrets }}
+      {{- if or .Values.novnc.affinity .Values.novnc.podAntiAffinity }}
+      affinity:
+        {{- with .Values.novnc.affinity }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- if eq .Values.novnc.podAntiAffinity "hard" }}
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - topologyKey: "{{ .Values.novnc.podAntiAffinityTopologyKey }}"
+              labelSelector:
+                matchLabels:
+                  app: {{ $fullName }}-novnc
+        {{- else if eq .Values.novnc.podAntiAffinity "soft" }}
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              podAffinityTerm:
+                topologyKey: "{{ .Values.novnc.podAntiAffinityTopologyKey }}"
+                labelSelector:
+                  matchLabels:
+                    app: {{ $fullName }}-novnc
+        {{- end }}
+      {{- end }}
+      {{- with .Values.novnc.image.pullSecrets }}
       imagePullSecrets:
       {{- toYaml . | nindent 6 }}
       {{- end }}
-      {{- with .Values.sunstone.nodeSelector }}
+      {{- with .Values.novnc.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.sunstone.tolerations }}
+      {{- with .Values.novnc.tolerations }}
       tolerations:
       {{- toYaml . | nindent 6 }}
       {{- end }}

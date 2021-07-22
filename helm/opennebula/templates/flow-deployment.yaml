@@ -63,6 +63,29 @@ spec:
       {{- with .Values.flow.sidecars }}
       {{- toYaml . | nindent 6 }}
       {{- end }}
+      {{- if or .Values.flow.affinity .Values.flow.podAntiAffinity }}
+      affinity:
+        {{- with .Values.flow.affinity }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- if eq .Values.flow.podAntiAffinity "hard" }}
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - topologyKey: "{{ .Values.flow.podAntiAffinityTopologyKey }}"
+              labelSelector:
+                matchLabels:
+                  app: {{ $fullName }}-flow
+        {{- else if eq .Values.flow.podAntiAffinity "soft" }}
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              podAffinityTerm:
+                topologyKey: "{{ .Values.flow.podAntiAffinityTopologyKey }}"
+                labelSelector:
+                  matchLabels:
+                    app: {{ $fullName }}-flow
+        {{- end }}
+      {{- end }}
       {{- with .Values.flow.image.pullSecrets }}
       imagePullSecrets:
       {{- toYaml . | nindent 6 }}
