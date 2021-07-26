@@ -47,6 +47,7 @@ spec:
             - "opennebula_exporter > /metrics/opennebula.prom.$$ && mv /metrics/opennebula.prom.$$ /metrics/opennebula.prom"
           initialDelaySeconds: 5
           failureThreshold: 1
+          timeoutSeconds: 10
           periodSeconds: {{ .Values.exporter.periodSeconds }}
         env:
         - name: ONE_XMLRPC
