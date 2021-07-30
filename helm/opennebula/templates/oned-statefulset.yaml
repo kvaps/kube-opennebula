@@ -83,6 +83,12 @@ spec:
         imagePullPolicy: {{ .Values.oned.image.pullPolicy }}
         command: [ '/scripts/init.sh' ]
         args: [ '{{ if .Values.oned.debug }}debug{{ else }}start{{ end }}' ]
+        {{ if ge (int .Values.oned.leaderId) 0 }}
+        lifecycle:
+          postStart:
+            exec:
+              command: [ '/bin/sh', '-c', '[ ${HOSTNAME##*-} = ${LEADER_SERVER_ID} ] && /scripts/vip.sh leader || /scripts/vip.sh follower' ]
+        {{ end }}
         ports:
         - name: http
           containerPort: {{ .Values.oned.port }}
