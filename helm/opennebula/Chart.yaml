@@ -1,7 +1,7 @@
 name: opennebula
 description: OpenNebula cloud computing platform
-version: 2.0.0
-appVersion: 5.12.0.4
+version: 2.0.1
+appVersion: 5.12.0.4-1
 icon: https://upload.wikimedia.org/wikipedia/en/thumb/9/9f/OpenNebula-logo.svg/330px-OpenNebula-logo.svg.png
 keywords:
   - opennebula

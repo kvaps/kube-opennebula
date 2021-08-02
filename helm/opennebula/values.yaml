@@ -66,7 +66,7 @@ oned:
 
   image:
     repository: ghcr.io/kvaps/opennebula
-    tag: v5.12.0.4
+    tag: v5.12.0.4-1
     pullPolicy: IfNotPresent
     pullSecrets:
     - name: regsecret
@@ -186,7 +186,7 @@ sched:
 
   image:
     repository: ghcr.io/kvaps/opennebula
-    tag: v5.12.0.4
+    tag: v5.12.0.4-1
     pullPolicy: IfNotPresent
     pullSecrets:
     - name: regsecret
@@ -226,7 +226,7 @@ hem:
 
   image:
     repository: ghcr.io/kvaps/opennebula
-    tag: v5.12.0.4
+    tag: v5.12.0.4-1
     pullPolicy: IfNotPresent
     pullSecrets:
     - name: regsecret
@@ -259,7 +259,7 @@ sunstone:
 
   image:
     repository: ghcr.io/kvaps/opennebula-sunstone
-    tag: v5.12.0.4
+    tag: v5.12.0.4-1
     pullPolicy: IfNotPresent
     pullSecrets:
     - name: regsecret
@@ -308,7 +308,7 @@ novnc:
 
   image:
     repository: ghcr.io/kvaps/opennebula-sunstone
-    tag: v5.12.0.4
+    tag: v5.12.0.4-1
     pullPolicy: IfNotPresent
     pullSecrets:
     - name: regsecret
@@ -397,7 +397,7 @@ gate:
 
   image:
     repository: ghcr.io/kvaps/opennebula-gate
-    tag: v5.12.0.4
+    tag: v5.12.0.4-1
     pullPolicy: IfNotPresent
     pullSecrets:
       - name: regsecret
@@ -450,7 +450,7 @@ flow:
 
   image:
     repository: ghcr.io/kvaps/opennebula-flow
-    tag: v5.12.0.4
+    tag: v5.12.0.4-1
     pullPolicy: IfNotPresent
     pullSecrets:
     - name: regsecret
@@ -489,7 +489,7 @@ exporter:
 
   image:
     repository: ghcr.io/kvaps/opennebula-exporter
-    tag: v5.12.0.4
+    tag: v5.12.0.4-1
     pullPolicy: IfNotPresent
     pullSecrets:
       - name: regsecret

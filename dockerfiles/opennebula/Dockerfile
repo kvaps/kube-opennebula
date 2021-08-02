@@ -3,7 +3,7 @@ FROM ubuntu:20.04
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Install opennebula-common and rubygems
-COPY --from=ghcr.io/kvaps/opennebula-packages:v5.12.0.4 /packages/opennebula-common_*.deb /packages/ruby-opennebula_*_all.deb /packages/opennebula-tools_*.deb /packages/opennebula-rubygems_*.deb /packages/opennebula-common-onescape_*.deb /packages/
+COPY --from=ghcr.io/kvaps/opennebula-packages:v5.12.0.4-1 /packages/opennebula-common_*.deb /packages/ruby-opennebula_*_all.deb /packages/opennebula-tools_*.deb /packages/opennebula-rubygems_*.deb /packages/opennebula-common-onescape_*.deb /packages/
 RUN apt-get update \
  && ln -s /bin/true /usr/bin/systemd-tmpfiles \
  && apt-get -y install /packages/*.deb \
@@ -16,7 +16,7 @@ RUN apt-get update \
 RUN for i in oned.log sched.log onehem.log sunstone.log novnc.log onegate.log oneflow.log; do ln -sf "/proc/1/fd/1" "/var/log/one/$i"; done
 
 # Install opennebula
-COPY --from=ghcr.io/kvaps/opennebula-packages:v5.12.0.4 /packages/opennebula_*.deb /packages/
+COPY --from=ghcr.io/kvaps/opennebula-packages:v5.12.0.4-1 /packages/opennebula_*.deb /packages/
 RUN apt-get -y update \
  && apt-get -y install mysql-client \
  && apt-get -y install /packages/opennebula_*.deb \

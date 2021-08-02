@@ -47,9 +47,14 @@ RUN wget -q -O - https://github.com/OpenNebula/one/archive/release-$VERSION.tar.
 WORKDIR /opennebula-$VERSION
 
 # Apply patches
+COPY patches /patches
 RUN wget -q -O - https://github.com/OpenNebula/one/pull/4585.diff | patch -p1 \
  && wget -q -O - https://github.com/OpenNebula/one/commit/c97f54281dc89a4164df9de98a8d9aa18bfd885d.diff | patch -p1 \
- && wget -q -O - https://github.com/OpenNebula/one/commit/c5dcfd5a974e538b5254c0bfe50eec6da42618ba.diff | patch -p1
+ && wget -q -O - https://github.com/OpenNebula/one/commit/c5dcfd5a974e538b5254c0bfe50eec6da42618ba.diff | patch -p1 \
+ && wget -q -O - https://github.com/OpenNebula/one/commit/b9623af7696f6844acd585ca083c2e91604fd231.diff | patch -p1 \
+ && cat /patches/915277d928c6242bba7501a3b47cd8f7b30051a3.diff | patch -p1 \
+ && wget -q -O - https://github.com/OpenNebula/one/commit/2a413d30957bfc5e4b1bf68cb7b38cfe0e660b48.diff | patch -p1 \
+ && cat /patches/16758d6ce06ebabd7ad7f79d82460e5430639b32.diff | patch -p1
 
 # Build docs
 RUN cd share/man \
