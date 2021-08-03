@@ -76,7 +76,7 @@ configure_vnet_ar
 {{- end }}
 {{- end }}
 
-{{- range $vnet := .Values.configurator.vnets }}
+{{- range $vnet := .Values.configurator.vntemplates }}
 configure_vntemplate
   {{- printf " name=%s" (.name | squote) }}
   {{- printf " user=%s" (.user | squote) }}
