@@ -1,0 +1,37 @@
+#!/bin/sh
+set -e
+. $(dirname $0)/functions.sh
+echo "Node hostname: $HOSTNAME"
+
+{{- range .Values.configurator.hosts }}
+if echo "$HOSTNAME" | grep -q -E '{{ required "A valid .Values.configurator.hosts[].regex entry required!" .regex }}'; then
+
+{{- if .setupSSHKeys }}
+  echo "Setting up SSH keys:"
+  nsenter --target 1 --mount --uts --ipc --net --pid -- bash <<\EOUS
+set -x
+mkdir -p /var/lib/one/.ssh
+chmod 700 /var/lib/one/.ssh
+ssh-keygen -y -f /dev/stdin > /var/lib/one/.ssh/authorized_keys <<EOF
+$SSH_KEY
+EOF
+chown 9869:9869 /var/lib/one /var/lib/one/.ssh /var/lib/one/.ssh/authorized_keys 
+EOUS
+
+{{- end }}
+
+{{- with .extraScript }}
+  echo "Running user script:"
+  nsenter --target 1 --mount --uts --ipc --net --pid -- bash <<\EOUS
+{{ . -}}
+EOUS
+{{- end }}
+
+  echo "Registring host in OpenNebula"
+  configure_host_lightweight name="$HOSTNAME" im_mad={{ .im_mad | squote }} vmm_mad={{ .vmm_mad | squote }}
+    {{- printf " template=%s" (include "opennebula.config" .template | squote) }}
+
+fi
+{{- end }}
+
+finish

@@ -1,0 +1,93 @@
+#!/bin/bash
+set -e
+. $(dirname $0)/functions.sh
+
+
+{{- range .Values.configurator.clusters }}
+configure_cluster
+  {{- printf " name=%s" (.name | squote) }}
+  {{- printf " template=%s" (include "opennebula.config" .template | squote) }}
+{{- end }}
+
+{{- range .Values.configurator.images }}
+configure_image
+  {{- printf " name=%s" (.name | squote) }}
+  {{- printf " user=%s" (.user | squote) }}
+  {{- printf " group=%s" (.group | squote) }}
+  {{- printf " chmod=%s" (.chmod | squote) }}
+  {{- printf " path=%s" (.path | squote) }}
+  {{- printf " size=%s" (.size | squote) }}
+  {{- printf " type=%s" (.type | squote) }}
+  {{- printf " datastore=%s" (.datastore | squote) }}
+  {{- printf " template=%s" (include "opennebula.config" .template | squote) }}
+{{- end }}
+
+{{- range .Values.configurator.datastores }}
+configure_datastore
+  {{- printf " name=%s" (.name | squote) }}
+  {{- printf " user=%s" (.user | squote) }}
+  {{- printf " group=%s" (.group | squote) }}
+  {{- printf " chmod=%s" (.chmod | squote) }}
+  {{- printf " clusters=%s" (.clusters | squote) }}
+  {{- printf " template=%s" (include "opennebula.config" .template | squote) }}
+{{- end }}
+
+{{- range .Values.configurator.groups }}
+configure_group
+  {{- printf " name=%s" (.name | squote) }}
+  {{- printf " template=%s" (include "opennebula.config" .template | squote) }}
+{{- end }}
+
+{{- range .Values.configurator.hooks }}
+configure_hook
+  {{- printf " name=%s" (.name | squote) }}
+  {{- printf " template=%s" (include "opennebula.config" .template | squote) }}
+{{- end }}
+
+{{- range .Values.configurator.marketplaces }}
+configure_marketplace
+  {{- printf " name=%s" (.name | squote) }}
+  {{- printf " template=%s" (include "opennebula.config" .template | squote) }}
+{{- end }}
+
+{{- range .Values.configurator.templates }}
+configure_template
+  {{- printf " name=%s" (.name | squote) }}
+  {{- printf " user=%s" (.user | squote) }}
+  {{- printf " group=%s" (.group | squote) }}
+  {{- printf " chmod=%s" (.chmod | squote) }}
+  {{- printf " template=%s" (include "opennebula.config" .template | squote) }}
+{{- end }}
+
+{{- range $vnet := .Values.configurator.vnets }}
+configure_vnet
+  {{- printf " name=%s" (.name | squote) }}
+  {{- printf " user=%s" (.user | squote) }}
+  {{- printf " group=%s" (.group | squote) }}
+  {{- printf " chmod=%s" (.chmod | squote) }}
+  {{- printf " clusters=%s" (.clusters | squote) }}
+  {{- printf " template=%s" (include "opennebula.config" .template | squote) }}
+{{- range .ars }}
+configure_vnet_ar
+  {{- printf " name=%s" ($vnet.name | squote) }}
+  {{- printf " user=%s" ($vnet.user | squote) }}
+  {{- printf " ar_uniq_key=%s" ($vnet.arUniqKey | squote) }}
+  {{- printf " template=%s" (include "opennebula.config" . | squote) }}
+{{- end }}
+{{- end }}
+
+{{- range $vnet := .Values.configurator.vnets }}
+configure_vntemplate
+  {{- printf " name=%s" (.name | squote) }}
+  {{- printf " user=%s" (.user | squote) }}
+  {{- printf " group=%s" (.group | squote) }}
+  {{- printf " chmod=%s" (.chmod | squote) }}
+  {{- printf " template=%s" (include "opennebula.config" .template | squote) }}
+{{- end }}
+
+{{- range $vnet := .Values.configurator.acl }}
+configure_acl
+  {{- printf " acl=%s" (.acl | squote) }}
+{{- end }}
+
+finish

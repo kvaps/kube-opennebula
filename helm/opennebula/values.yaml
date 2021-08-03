@@ -513,3 +513,200 @@ exporter:
     interval: 30s
     labels: {}
     annotations: {}
+
+# ------------------------------------------------------------------------------
+# OpenNebula configuration service
+# ------------------------------------------------------------------------------
+
+configurator:
+  enabled: true
+  labels: {}
+  annotations: {}
+  podLabels: {}
+  podAnnotations: {}
+  extraEnv: []
+  sidecars: []
+  extraVolumes: []
+  extraVolumeMounts: []
+
+  image:
+    repository: ghcr.io/kvaps/opennebula-exporter
+    tag: v5.12.0.4
+    pullPolicy: IfNotPresent
+    pullSecrets:
+      - name: regsecret
+
+  nodeSelector: {}
+  tolerations: []
+  podAntiAffinity: soft
+  podAntiAffinityTopologyKey: kubernetes.io/hostname
+  affinity: {}
+
+  # Hosts configuration requires additional DaemonSet service
+  daemonSet:
+    enabled: true
+    image:
+      repository: alpine
+      tag: 3.12
+      pullPolicy: IfNotPresent
+      pullSecrets:
+        - name: regsecret
+
+    nodeSelector: {}
+    tolerations: []
+    podAntiAffinity: soft
+    podAntiAffinityTopologyKey: kubernetes.io/hostname
+    affinity: {}
+
+  hosts:
+  - regex: ".*" # regular expression to match host names
+    im_mad: kvm
+    vmm_mad: kvm
+    template: {}
+      #RESERVED_CPU: 100
+      #RESERVED_MEM: 2922448
+    setupSSHKeys: true
+    # extra script to configure the nodes
+    # the commands listed here will run on host
+    extraScript: |
+      set -x
+      mkdir -p /var/lib/one/datastores
+      # mount -t nfs some:/share/one/100 /var/lib/one/datastores/100
+      find /var/lib/one/datastores -maxdepth 1 -exec chown 9869:9869 {} \;
+
+  clusters: []
+  #- name: cluster1
+  #  template:
+  #    PRIORITY: 1000
+  #    RESERVED_CPU: 0
+  #    RESERVED_RAM: 0
+
+  images: []
+  #- name:      "FreeBSD 12"
+  #  path:      "https://s3-eu-west-1.amazonaws.com/opennebula-marketplace/freebsd12-5.10.0-1.20191115.qcow2"
+  #  user:      "oneadmin"
+  #  group:     "oneadmin"
+  #  chmod:     "644"
+  #  type:      "OS"
+  #  datastore: "images"
+  #  template:
+  #    DEV_PREFIX: vd
+  #    FORMAT: raw
+  #    LABELS: OS
+
+  datastores: []
+  #- name: "images"
+  #  chmod: "600"
+  #  user: "oneadmin"
+  #  group: "oneadmin"
+  #  clusters: "default cluster1"
+  #  template: |
+  #    ALLOW_ORPHANS: "NO"
+  #    CLONE_TARGET: "SYSTEM"
+  #    DRIVER: "raw"
+  #    DS_MAD: "fs"
+  #    DS_MIGRATE: "YES"
+  #    LN_TARGET: "SYSTEM"
+  #    RESTRICTED_DIRS: "/"
+  #    SAFE_DIRS: "/var/tmp"
+  #    TM_MAD: "fs_lvm"
+  #    TYPE: "IMAGE_DS"
+
+  groups: []
+  #- name: cloud-users
+  #  template:
+  #    SUNSTONE:
+  #      DEFAULT_VIEW: "advanced"
+  #      GROUP_ADMIN_DEFAULT_VIEW: ""
+  #      GROUP_ADMIN_VIEWS: "cloud,advanced"
+  #      VIEWS: "cloud,advanced"
+
+  hooks: []
+  #- name: iso_check_chtype
+  #  template:
+  #    TYPE: api
+  #    COMMAND: iso_check.sh
+  #    ARGUMENTS: "chtype $API"
+  #    CALL: "one.image.chtype"
+
+  marketplaces: []
+  #- name: static
+  #  template:
+  #    ENDPOINT: "https://marketplace.opennebula.wedos.cloud/metadata/"
+  #    MARKET_MAD: "static"
+
+  templates: []
+  #- name:     "FreeBSD 12"
+  #  user:     "oneadmin"
+  #  group:    "oneadmin"
+  #  chmod:    "604"
+  #  template: 
+  #    CONTEXT:
+  #      NETWORK: "YES"
+  #      PASSWORD_RESET: "NO"
+  #      REPORT_READY: "YES"
+  #      SSH_PUBLIC_KEY: "$USER[SSH_PUBLIC_KEY]"
+  #      TOKEN: "YES"
+  #    CPU: "0.5"
+  #    DISK:
+  #      IMAGE: "FreeBSD 12 [5.10.0-1.20191115]"
+  #      IMAGE_UNAME: "oneadmin"
+  #      SIZE: "3072"
+  #    GRAPHICS:
+  #      LISTEN: "0.0.0.0"
+  #      RANDOM_PASSWD: "YES"
+  #      TYPE: "VNC"
+  #    INPUTS_ORDER: ""
+  #    LABELS: "Cloud"
+  #    LOGO: "images/logos/freebsd.png"
+  #    MEMORY: "512"
+  #    MEMORY_UNIT_COST: "MB"
+  #    NIC_DEFAULT:
+  #      MODEL: "virtio"
+  #    OS:
+  #      ARCH: "x86_64"
+  #      BOOT: ""
+  #    VCPU: "1"
+
+  vnets: []
+  #  name: dev-ip
+  #  user: oneadmin
+  #  group: oneadmin
+  #  chmod: "600"
+  #  clusters: "cluster1"
+  #  template: |
+  #    BRIDGE: "vmbr0v4000"
+  #    DNS: "10.28.0.1"
+  #    PHYDEV: "bond0"
+  #    SECURITY_GROUPS: "0"
+  #    VLAN_ID: "4000"
+  #    VN_MAD: "802.1Q"
+  #  clusters: "default cluster1"
+  #  chmod: "604"
+  #  user: "oneadmin"
+  #  group: "oneadmin"
+  #  ars:
+  #  - GATEWAY: "172.16.0.1"
+  #    IP: "172.16.0.5"
+  #    SIZE: "250"
+  #    TYPE: "IP4"
+  #  - GATEWAY: "172.17.0.1"
+  #    IP: "172.17.0.5"
+  #    SIZE: "250"
+  #    TYPE: "IP4"
+
+  vntemplates: []
+  #- name: cloud-private-net
+  #  user: oneadmin
+  #  group: oneadmin
+  #  chmod: "600"
+  #  template:
+  #    AUTOMATIC_VLAN_ID: "YES"
+  #    CLUSTER_IDS: "100"
+  #    PHYDEV: "bond0.4"
+  #    VN_MAD: "vxlan"
+  #    AR:
+  #      IP: "192.168.1.1"
+  #      SIZE: "254"
+  #      TYPE: "IP4"
+  #      AR_ID: ""

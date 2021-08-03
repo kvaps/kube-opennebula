@@ -1,0 +1,15 @@
+{{- $fullName := include "opennebula.fullname" . -}}
+{{- if .Values.configurator.enabled }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $fullName }}-configurator
+data:
+  functions.sh: |
+    {{- .Files.Get "scripts/functions.sh" | nindent 4 }}
+  configurator.oned: |
+    {{- tpl (.Files.Get "scripts/configurator.oned") . | nindent 4}}
+  configurator.host: |
+    {{- tpl (.Files.Get "scripts/configurator.host") . | nindent 4 }}
+{{- end }}

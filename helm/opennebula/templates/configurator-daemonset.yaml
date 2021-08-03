@@ -1,0 +1,90 @@
+{{- $fullName := include "opennebula.fullname" . -}}
+{{- if and .Values.configurator.enabled }}
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  labels:
+    app: {{ $fullName }}-configurator
+  name: {{ $fullName }}-configurator
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ $fullName }}-configurator
+      role: host
+  template:
+    metadata:
+      labels:
+        app: {{ $fullName }}-configurator
+        role: host
+      annotations:
+        checksum/scripts: {{ printf "%s\n%s" (.Files.Get "scripts/functions.sh") (tpl (.Files.Get "scripts/configurator.host") .) | sha256sum }}
+    spec:
+      imagePullSecrets:
+        {{- toYaml .Values.configurator.daemonSet.image.pullSecrets | nindent 8 }}
+      containers:
+      - name: configurator
+        {{- with .Values.configurator.daemonSet.image }}
+        image: "{{ .repository }}{{ if .digest }}@{{ .digest }}{{ else }}:{{ .tag }}{{ end }}"
+        imagePullPolicy: {{ .pullPolicy }}
+        {{- end }}
+        command:
+        - /bin/sh
+        - /scripts/configurator.host
+        env:
+        - name: ONE_XMLRPC
+          value: http://{{ $fullName }}-oned:{{ .Values.oned.service.port }}/RPC2
+        - name: SSH_KEY
+          valueFrom:
+            secretKeyRef:
+              key: id_rsa
+              name: {{ $fullName }}-ssh-keys
+        volumeMounts:
+        {{- with .Values.timezone }}
+        - name: timezone
+          mountPath: /etc/localtime
+          readOnly: true
+        {{- end }}
+        - name: scripts
+          mountPath: /scripts
+        - name: one-keys
+          mountPath: /var/lib/one/.one/one_auth
+          subPath: one_auth
+        {{- with .Values.configurator.daemonSet.extraVolumeMounts }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        securityContext:
+          privileged: true
+          runAsUser: 0
+      {{- with .Values.configurator.daemonSet.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.configurator.daemonSet.tolerations }}
+      tolerations:
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+      hostIPC: true
+      hostNetwork: true
+      hostPID: true
+      dnsPolicy: ClusterFirstWithHostNet
+      volumes:
+      {{- with .Values.timezone }}
+      - name: timezone
+        hostPath:
+          path: /usr/share/zoneinfo/{{ . }}
+          type: File
+      {{- end }}
+      - name: scripts
+        configMap:
+          name: {{ $fullName }}-configurator
+          defaultMode: 0777
+      - name: one-keys
+        secret:
+          secretName: {{ $fullName }}-one-keys
+      {{- with .Values.configurator.daemonSet.extraVolumes }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+{{- end }}
+
