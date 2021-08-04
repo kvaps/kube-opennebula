@@ -309,11 +309,14 @@ configure_marketplace() {
     CONFIG="$(mktemp)"
     trap "rm -f \"$CONFIG\"" EXIT
 
+    # Write template
+    echo "$template" > "$CONFIG"
+
     if [ -z "$ID" ]; then
       # New market
-      if OUTPUT="$(onemarket create "$name")"; then
+      echo "NAME=\"$name\"" >> "$CONFIG"
+      if OUTPUT="$(onemarket create "$CONFIG")"; then
         ID="$(echo "$OUTPUT" | awk '{print $NF}' )"
-        onemarket update "$ID" "$CONFIG"
       else
         RC=$?; echo "$OUTPUT"; exit $RC
       fi
