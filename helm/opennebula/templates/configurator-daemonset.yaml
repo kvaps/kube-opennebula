@@ -1,5 +1,5 @@
 {{- $fullName := include "opennebula.fullname" . -}}
-{{- if and .Values.configurator.enabled }}
+{{- if and .Values.configurator.enabled .Values.configurator.daemonSet.enabled .Values.configurator.hosts }}
 ---
 apiVersion: apps/v1
 kind: DaemonSet
@@ -21,8 +21,6 @@ spec:
       annotations:
         checksum/scripts: {{ printf "%s\n%s" (.Files.Get "scripts/functions.sh") (tpl (.Files.Get "scripts/configurator.host") .) | sha256sum }}
     spec:
-      imagePullSecrets:
-        {{- toYaml .Values.configurator.daemonSet.image.pullSecrets | nindent 8 }}
       containers:
       - name: configurator
         {{- with .Values.configurator.daemonSet.image }}
@@ -57,6 +55,14 @@ spec:
         securityContext:
           privileged: true
           runAsUser: 0
+      {{- with .Values.configurator.daemonSet.image.pullSecrets }}
+      imagePullSecrets:
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+      {{- with .Values.configurator.daemonSet.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       {{- with .Values.configurator.daemonSet.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

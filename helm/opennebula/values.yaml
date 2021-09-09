@@ -529,20 +529,23 @@ configurator:
   extraVolumes: []
   extraVolumeMounts: []
 
-  image:
-    repository: ghcr.io/kvaps/opennebula-exporter
-    tag: v5.12.0.4
-    pullPolicy: IfNotPresent
-    pullSecrets:
-      - name: regsecret
+  # OpenNebula configuration performed using Deployment
+  deployment:
+    enabled: true
+    image:
+      repository: ghcr.io/kvaps/opennebula-exporter
+      tag: v5.12.0.4
+      pullPolicy: IfNotPresent
+      pullSecrets:
+        - name: regsecret
 
-  nodeSelector: {}
-  tolerations: []
-  podAntiAffinity: soft
-  podAntiAffinityTopologyKey: kubernetes.io/hostname
-  affinity: {}
+    nodeSelector: {}
+    tolerations: []
+    podAntiAffinity: soft
+    podAntiAffinityTopologyKey: kubernetes.io/hostname
+    affinity: {}
 
-  # Hosts configuration requires additional DaemonSet service
+  # Hosts configuration performed using DaemonSet
   daemonSet:
     enabled: true
     image:
@@ -554,8 +557,6 @@ configurator:
 
     nodeSelector: {}
     tolerations: []
-    podAntiAffinity: soft
-    podAntiAffinityTopologyKey: kubernetes.io/hostname
     affinity: {}
 
   hosts:

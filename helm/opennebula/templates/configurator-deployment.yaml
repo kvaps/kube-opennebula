@@ -1,5 +1,5 @@
 {{- $fullName := include "opennebula.fullname" . -}}
-{{- if and .Values.configurator.enabled }}
+{{- if and .Values.configurator.enabled .Values.configurator.deployment.enabled }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -22,11 +22,9 @@ spec:
       annotations:
         checksum/scripts: {{ printf "%s\n%s" (.Files.Get "scripts/functions.sh") (tpl (.Files.Get "scripts/configurator.oned") .) | sha256sum }}
     spec:
-      imagePullSecrets:
-        {{- toYaml .Values.configurator.image.pullSecrets | nindent 8 }}
       containers:
       - name: configurator
-        {{- with .Values.configurator.image }}
+        {{- with .Values.configurator.deployment.image }}
         image: "{{ .repository }}{{ if .digest }}@{{ .digest }}{{ else }}:{{ .tag }}{{ end }}"
         imagePullPolicy: {{ .pullPolicy }}
         {{- end }}
@@ -50,11 +48,38 @@ spec:
         {{- with .Values.configurator.extraVolumeMounts }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
-      {{- with .Values.configurator.nodeSelector }}
+      {{- if or .Values.configurator.deployment.affinity .Values.configurator.deployment.podAntiAffinity }}
+      affinity:
+        {{- with .Values.configurator.deployment.affinity }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- if eq .Values.configurator.deployment.podAntiAffinity "hard" }}
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - topologyKey: "{{ .Values.configurator.deployment.podAntiAffinityTopologyKey }}"
+              labelSelector:
+                matchLabels:
+                  app: {{ $fullName }}-configurator.deployment
+        {{- else if eq .Values.configurator.deployment.podAntiAffinity "soft" }}
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              podAffinityTerm:
+                topologyKey: "{{ .Values.configurator.deployment.podAntiAffinityTopologyKey }}"
+                labelSelector:
+                  matchLabels:
+                    app: {{ $fullName }}-configurator.deployment
+        {{- end }}
+      {{- end }}
+      {{- with .Values.configurator.deployment.image.pullSecrets }}
+      imagePullSecrets:
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+      {{- with .Values.configurator.deployment.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.configurator.tolerations }}
+      {{- with .Values.configurator.deployment.tolerations }}
       tolerations:
       {{- toYaml . | nindent 6 }}
       {{- end }}
