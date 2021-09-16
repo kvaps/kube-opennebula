@@ -2,7 +2,7 @@
 {{- $fullName := include "opennebula.fullname" . -}}
 {{- $servicePort := .Values.sunstone.service.port -}}
 ---
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: {{ $fullName }}-sunstone
@@ -16,15 +16,19 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
+  ingressClassName: {{ .Values.sunstone.ingress.ingressClassName }}
   rules:
   {{- range .Values.sunstone.ingress.hosts }}
   - host: {{ . }}
     http:
       paths:
       - path: /
+        pathType: Prefix
         backend:
-          serviceName: {{ $fullName }}-sunstone
-          servicePort:  {{ $servicePort }}
+          service:
+            name: {{ $fullName }}-sunstone
+            port:
+              number: {{ $servicePort }}
   {{- end }}
   {{- if .Values.sunstone.ingress.tls }}
   tls:

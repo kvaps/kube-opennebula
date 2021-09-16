@@ -143,6 +143,7 @@ oned:
     annotations: {}
       #kubernetes.io/ingress.class: nginx
       #kubernetes.io/tls-acme: "true"
+    ingressClassName: nginx
     hosts:
     - opennebula.example.org
     tls:
@@ -277,6 +278,7 @@ sunstone:
       #kubernetes.io/ingress.class: nginx
       #nginx.ingress.kubernetes.io/proxy-body-size: 5000m
       #kubernetes.io/tls-acme: "true"
+    ingressClassName: nginx
     hosts:
     - opennebula.example.org
     tls:
@@ -332,6 +334,7 @@ novnc:
     annotations: {}
       #kubernetes.io/ingress.class: nginx
       #kubernetes.io/tls-acme: "true"
+    ingressClassName: nginx
     hosts:
     - opennebula.example.org
     tls:
@@ -421,6 +424,7 @@ gate:
     annotations: {}
       #kubernetes.io/ingress.class: nginx
       #kubernetes.io/tls-acme: "true"
+    ingressClassName: nginx
     hosts:
     - opennebula-gate.example.org
     tls:
