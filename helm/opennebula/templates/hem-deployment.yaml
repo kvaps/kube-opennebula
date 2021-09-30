@@ -39,9 +39,15 @@ spec:
         image: {{ .Values.hem.image.repository }}:{{ .Values.hem.image.tag }}
         imagePullPolicy: {{ .Values.hem.image.pullPolicy }}
         command: [ "/usr/bin/ruby", "/usr/lib/one/onehem/onehem-server.rb" ]
+        lifecycle:
+          postStart:
+            exec:
+              command: [ '/bin/sh', '-c', 'ssh-agent -a $SSH_AUTH_SOCK && ssh-add' ]
         env:
         - name: ONE_XMLRPC
           value: http://{{ template "opennebula.fullname" . }}-oned:{{ .Values.oned.service.port }}/RPC2
+        - name: SSH_AUTH_SOCK
+          value: /var/run/one/ssh-agent.sock
         {{- with .Values.hem.extraEnv }}
         {{- toYaml . | nindent 8 }}
         {{- end }}

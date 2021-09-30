@@ -82,6 +82,10 @@ spec:
         image: {{ .Values.oned.image.repository }}:{{ .Values.oned.image.tag }}
         imagePullPolicy: {{ .Values.oned.image.pullPolicy }}
         command: [ '/scripts/init.sh' ]
+        lifecycle:
+          postStart:
+            exec:
+              command: [ '/bin/sh', '-c', 'ssh-agent -a $SSH_AUTH_SOCK && ssh-add' ]
         args: [ '{{ if .Values.oned.debug }}debug{{ else }}start{{ end }}' ]
         {{ if ge (int .Values.oned.leaderId) 0 }}
         lifecycle:
@@ -129,6 +133,8 @@ spec:
           value: {{ .Values.oned.db.dbName }}
         - name: DB_CONNECTIONS
           value: "{{ .Values.oned.db.connections }}"
+        - name: SSH_AUTH_SOCK
+          value: /var/run/one/ssh-agent.sock
         {{- with .Values.oned.extraEnv }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
