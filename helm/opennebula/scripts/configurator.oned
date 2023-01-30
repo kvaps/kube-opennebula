@@ -9,16 +9,9 @@ configure_cluster
   {{- printf " template=%s" (include "opennebula.config" .template | squote) }}
 {{- end }}
 
-{{- range .Values.configurator.images }}
-configure_image
+{{- range .Values.configurator.groups }}
+configure_group
   {{- printf " name=%s" (.name | squote) }}
-  {{- printf " user=%s" (.user | squote) }}
-  {{- printf " group=%s" (.group | squote) }}
-  {{- printf " chmod=%s" (.chmod | squote) }}
-  {{- printf " path=%s" (.path | squote) }}
-  {{- printf " size=%s" (.size | squote) }}
-  {{- printf " type=%s" (.type | squote) }}
-  {{- printf " datastore=%s" (.datastore | squote) }}
   {{- printf " template=%s" (include "opennebula.config" .template | squote) }}
 {{- end }}
 
@@ -32,21 +25,22 @@ configure_datastore
   {{- printf " template=%s" (include "opennebula.config" .template | squote) }}
 {{- end }}
 
-{{- range .Values.configurator.groups }}
-configure_group
-  {{- printf " name=%s" (.name | squote) }}
-  {{- printf " template=%s" (include "opennebula.config" .template | squote) }}
-{{- end }}
-
-{{- range .Values.configurator.hooks }}
-configure_hook
-  {{- printf " name=%s" (.name | squote) }}
-  {{- printf " template=%s" (include "opennebula.config" .template | squote) }}
-{{- end }}
-
 {{- range .Values.configurator.marketplaces }}
 configure_marketplace
   {{- printf " name=%s" (.name | squote) }}
+  {{- printf " template=%s" (include "opennebula.config" .template | squote) }}
+{{- end }}
+
+{{- range .Values.configurator.images }}
+configure_image
+  {{- printf " name=%s" (.name | squote) }}
+  {{- printf " user=%s" (.user | squote) }}
+  {{- printf " group=%s" (.group | squote) }}
+  {{- printf " chmod=%s" (.chmod | squote) }}
+  {{- printf " path=%s" (.path | squote) }}
+  {{- printf " size=%s" (.size | squote) }}
+  {{- printf " type=%s" (.type | squote) }}
+  {{- printf " datastore=%s" (.datastore | squote) }}
   {{- printf " template=%s" (include "opennebula.config" .template | squote) }}
 {{- end }}
 
@@ -88,6 +82,12 @@ configure_vntemplate
 {{- range $vnet := .Values.configurator.acl }}
 configure_acl
   {{- printf " acl=%s" (.acl | squote) }}
+{{- end }}
+
+{{- range .Values.configurator.hooks }}
+configure_hook
+  {{- printf " name=%s" (.name | squote) }}
+  {{- printf " template=%s" (include "opennebula.config" .template | squote) }}
 {{- end }}
 
 finish
