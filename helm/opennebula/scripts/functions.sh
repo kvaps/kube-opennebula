@@ -247,7 +247,7 @@ configure_group() {
 configure_hook() {
   (
     set -e
-    echo "[datastore] $@"
+    echo "[hook] $@"
     local "$@"
     if [ -z "$name" ]; then
       echo 'name is required'
